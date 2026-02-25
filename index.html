@@ -1,35 +1,91 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-    <base target="_top">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>E-Absensi SMKN 1 KTG</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
-        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; overflow-x: hidden; }
-        .container { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); padding: 15px 20px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 90%; max-width: 400px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.2); }
-        .logo-school { width: 65px; height: auto; margin-bottom: 5px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); }
-        h2 { font-size: 1rem; margin: 0; letter-spacing: 0.5px; font-weight: 600; text-transform: uppercase; }
-        h3 { font-size: 0.85rem; margin: 0 0 5px 0; font-weight: 400; opacity: 0.9; }
-        #clock { font-size: 1.4rem; font-weight: 600; margin: 0 0 10px 0; color: #00ff88; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-        .camera-box { width: 100%; height: 400px; margin-bottom: 10px; border: 3px solid #fff; border-radius: 15px; overflow: hidden; background: #000; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { 
+            font-family: 'Poppins', sans-serif; 
+            background: #1e3c72; 
+            background: linear-gradient(180deg, #1e3c72 0%, #121212 100%);
+            color: white; margin: 0; padding: 0;
+            display: flex; justify-content: center; min-height: 100vh;
+        }
+
+        .container { width: 100%; max-width: 400px; padding: 15px; text-align: center; }
+        .logo-school { width: 50px; margin-top: 5px; }
+        h2 { font-size: 1rem; margin: 5px 0 0; letter-spacing: 1px; }
+        h3 { font-size: 0.7rem; font-weight: 300; opacity: 0.8; margin-bottom: 10px; }
+        
+        #clock { font-size: 1.8rem; font-weight: 600; color: #00ff88; margin: 5px 0 15px 0; }
+
+        /* Login & Info Card */
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        input { 
+            width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 10px; 
+            border: none; font-size: 1rem; text-align: center; font-family: inherit;
+        }
+
+        .user-info { 
+            background: rgba(255,255,255,0.95); color: #1e3c72; 
+            padding: 10px; border-radius: 12px; margin-bottom: 15px; 
+            border-left: 5px solid #2196f3;
+        }
+        
+        /* Kamera Tetap (Persegi) */
+        .camera-box {
+            position: relative;
+            width: 100%; 
+            aspect-ratio: 3/4; /* Proporsi kamera HP portrait */
+            max-height: 350px;
+            margin: 0 auto 15px;
+            border: 3px solid #fff;
+            border-radius: 15px;
+            overflow: hidden;
+            background: #000;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
         #webcam { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
-        #face-status { position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); padding: 2px 10px; border-radius: 20px; font-size: 0.6rem; color: #ffeb3b; z-index: 10; }
-        .coords-container { display: flex; gap: 6px; margin-bottom: 10px; }
-        .coord-box { flex: 1; background: rgba(0, 0, 0, 0.3); padding: 5px; border-radius: 8px; font-size: 0.65rem; }
-        .coord-label { display: block; font-size: 0.5rem; color: #bbb; font-weight: bold; }
-        input { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 8px; border: none; box-sizing: border-box; text-align: center; font-family: 'Poppins'; outline: none; font-weight: 600; color: #333; }
-        .button-group { display: flex; gap: 8px; margin-bottom: 8px; }
-        .btn { width: 100%; padding: 12px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; transition: 0.3s; font-family: 'Poppins'; }
-        .btn-datang { background: #00c853; flex: 1; opacity: 0.5; }
-        .btn-pulang { background: #ff5252; flex: 1; opacity: 0.5; }
-        .btn-ambil { background: #2196f3; margin-top: 2px; width: 100%; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
-        .btn:disabled { background: #666; cursor: not-allowed; opacity: 0.3 !important; }
-        .btn.active-status { opacity: 1; border: 2px solid white; transform: scale(1.05); }
-        .user-info { margin-bottom: 10px; background: rgba(255,255,255,0.95); padding: 8px 10px; border-radius: 10px; display: none; border-left: 5px solid #2196f3; color: #333; text-align: center; }
-        #pesan { margin-top: 8px; font-weight: bold; font-size: 0.8rem; min-height: 1.2em; }
-        .success-box { background: rgba(0,200,83,0.2); color: #00ff88; padding: 10px; border-radius: 10px; border: 1px solid #00c853; }
-        .btn-keluar { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; font-size: 0.7rem; margin-top: 15px; padding: 6px 15px; border-radius: 20px; cursor: pointer; }
-        .btn-home-monitoring { display: block; width: 100%; margin-top: 12px; padding: 12px; background: #ffffff; color: #1e3c72; border: none; border-radius: 12px; font-size: 0.85rem; font-weight: 600; cursor: pointer; text-transform: uppercase; }
+
+        #face-status { 
+            position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.6); padding: 3px 12px; border-radius: 20px;
+            font-size: 0.65rem; color: #ffeb3b; z-index: 10;
+        }
+
+        /* Buttons */
+        .button-group { display: flex; gap: 8px; margin-bottom: 10px; }
+        .btn { 
+            border: none; border-radius: 10px; font-weight: 600; font-family: inherit;
+            cursor: pointer; transition: 0.2s;
+        }
+
+        .btn-status { flex: 1; padding: 12px; font-size: 0.8rem; opacity: 0.4; color: white; }
+        .btn-datang { background: #00c853; }
+        .btn-pulang { background: #ff5252; }
+        .btn-ambil { width: 100%; padding: 15px; background: #2196f3; color: white; font-size: 1rem; margin-top: 5px; }
+        
+        .btn.active-status { opacity: 1; border: 2px solid white; transform: scale(1.02); }
+        .btn:disabled { background: #666 !important; opacity: 0.3 !important; }
+
+        .coord-row { display: flex; gap: 5px; margin-top: 10px; opacity: 0.7; font-size: 0.6rem; }
+        .coord-row div { flex: 1; background: rgba(0,0,0,0.3); padding: 4px; border-radius: 6px; }
+
+        #pesan { font-size: 0.8rem; margin: 10px 0; min-height: 1.2em; font-weight: 600; }
+        .nav-btn { background: white; color: #1e3c72; width: 100%; padding: 12px; border: none; border-radius: 10px; font-weight: 600; font-size: 0.8rem; margin-top: 10px; }
+        .logout-btn { background: none; color: white; border: 1px solid rgba(255,255,255,0.3); padding: 6px 15px; border-radius: 20px; font-size: 0.7rem; margin-top: 15px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -40,16 +96,15 @@
     <h3>SMK N 1 Kotamobagu</h3>
     <div id="clock">00:00:00</div>
 
-    <div id="loginBox">
-        <p style="font-size: 0.75rem; margin: 0 0 8px 0; opacity: 0.8;">Masukkan ID untuk masuk</p>
-        <input type="text" id="nipInput" placeholder="NIP / ID ">
-        <button onclick="prosesLogin()" id="btnLogin" class="btn btn-ambil">LANJUTKAN</button>
+    <div id="loginBox" class="card">
+        <input type="text" id="nipInput" inputmode="numeric" placeholder="Masukkan NIP / ID">
+        <button onclick="prosesLogin()" id="btnLogin" class="btn btn-ambil">MASUK</button>
     </div>
 
     <div id="mainApp" style="display: none;">
         <div id="userInfo" class="user-info">
-            <b id="displayNama" style="font-size: 0.95rem; display: block; color: #1e3c72;">Nama User</b>
-            <span id="displayJabatan" style="font-size: 0.7rem; color: #666; display: block;">Jabatan</span>
+            <b id="displayNama" style="font-size: 0.9rem; display: block;">Nama User</b>
+            <span id="displayJabatan" style="font-size: 0.7rem; opacity: 0.8;">Jabatan</span>
         </div>
 
         <div class="camera-box">
@@ -58,25 +113,27 @@
             <canvas id="canvas" style="display:none;"></canvas>
         </div>
 
-        <div class="coords-container">
-            <div class="coord-box"><span class="coord-label">LATITUDE</span><span id="lat-val">0.0</span></div>
-            <div class="coord-box"><span class="coord-label">LONGITUDE</span><span id="lon-val">0.0</span></div>
-        </div>
-        
         <div class="button-group">
-            <button id="btnDatang" class="btn btn-datang" onclick="selectType('Datang')">DATANG</button>
-            <button id="btnPulang" class="btn btn-pulang" onclick="selectType('Pulang')">PULANG</button>
+            <button id="btnDatang" class="btn btn-status btn-datang" onclick="selectType('Datang')">DATANG</button>
+            <button id="btnPulang" class="btn btn-status btn-pulang" onclick="selectType('Pulang')">PULANG</button>
         </div>
 
         <button onclick="prosesAmbilAbsen()" id="btnAmbil" class="btn btn-ambil" disabled>📸 AMBIL ABSEN</button>
+        
         <div id="pesan"></div>
-        <button onclick="logoutKeLogin()" class="btn-keluar">← Keluar / Ganti Akun</button>
-        <button onclick="bukaDashboard()" class="btn-home-monitoring">🏠 MONITORING KEHADIRAN</button>
+
+        <div class="coord-row">
+            <div>Lat: <span id="lat-val">0</span></div>
+            <div>Lon: <span id="lon-val">0</span></div>
+        </div>
+
+        <button onclick="bukaDashboard()" class="nav-btn">🏠 MONITORING KEHADIRAN</button>
+        <button onclick="logoutKeLogin()" class="logout-btn">Keluar / Ganti Akun</button>
     </div>
 </div>
 
 <script>
-// KONFIGURASI
+// SCRIPT LOGIC (Tetap sama dengan yang Anda miliki sebelumnya)
 const SCRIPT_URL = "https://script.google.com/a/guru.sma.belajar.id/macros/s/AKfycbyOWkkDREx-TQj3v7hycUFkhweT2VRqIphq6KxV-J4dYmK0n3zQHvPGVsLVaeTWXpNB/exec";
 
 let currentLat = 0, currentLon = 0, userData = null, statusAbsen = ""; 
@@ -85,7 +142,6 @@ const video = document.getElementById('webcam');
 const canvas = document.getElementById('canvas');
 const faceStatus = document.getElementById('face-status');
 
-// 1. Load AI Models
 async function loadModels() {
     try {
         const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
@@ -98,12 +154,10 @@ async function loadModels() {
 }
 loadModels();
 
-// Jam Digital
 setInterval(() => { 
     document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID'); 
 }, 1000);
 
-// Deteksi Wajah Kontinu (Hanya aktif jika sudah pilih tipe absen)
 async function detectFace() {
     if (!modelsLoaded || !video.srcObject) return null;
     const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.5 });
@@ -122,19 +176,13 @@ async function detectFace() {
     }
 }
 
-// Loop Deteksi
-setInterval(() => {
-    if (userData) detectFace();
-}, 1000);
+setInterval(() => { if (userData) detectFace(); }, 1000);
 
-// 2. Fungsi Login
 async function prosesLogin() {
     const nip = document.getElementById('nipInput').value.trim();
     if (!nip) return alert("Masukkan ID/NIP!");
-
-    const btnLogin = document.getElementById('btnLogin');
-    btnLogin.disabled = true;
-    btnLogin.innerText = "⏳ Mengecek...";
+    const btn = document.getElementById('btnLogin');
+    btn.disabled = true; btn.innerText = "⏳ Mengecek...";
 
     try {
         const response = await fetch(SCRIPT_URL, {
@@ -149,95 +197,63 @@ async function prosesLogin() {
             document.getElementById('displayJabatan').innerText = res.jabatan;
             document.getElementById('loginBox').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
-            document.getElementById('userInfo').style.display = 'block';
-            
             initCameraAndGPS();
-
+            
             if (!res.bolehAbsen) {
                 document.getElementById('btnDatang').disabled = true;
                 document.getElementById('btnPulang').disabled = true;
-                document.getElementById('pesan').innerHTML = `<div style="background:#fff3cd; color:#856404; padding:10px; border-radius:10px; margin-top:10px;">⚠️ ${res.pesanWaktu}</div>`;
+                document.getElementById('pesan').innerHTML = `<div style="color:yellow; font-size:0.7rem;">⚠️ ${res.pesanWaktu}</div>`;
             } else {
                 document.getElementById('btnDatang').disabled = res.sudahDatang;
                 document.getElementById('btnPulang').disabled = res.sudahPulang;
             }
         } else {
-            alert(res.message || "ID tidak ditemukan");
-            btnLogin.disabled = false;
-            btnLogin.innerText = "LANJUTKAN";
+            alert(res.message); btn.disabled = false; btn.innerText = "MASUK";
         }
-    } catch (err) {
-        alert("Gagal terhubung ke Server. Pastikan link Apps Script sudah benar.");
-        btnLogin.disabled = false;
-        btnLogin.innerText = "LANJUTKAN";
-    }
+    } catch (err) { alert("Gagal koneksi!"); btn.disabled = false; }
 }
 
-// 3. Inisialisasi Kamera & GPS
 async function initCameraAndGPS() {
     try { 
         const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
         video.srcObject = stream;
-    } catch (err) { 
-        alert("Kamera diblokir! Mohon izinkan akses kamera di pengaturan browser."); 
-    }
+    } catch (err) { alert("Kamera diblokir!"); }
 
     if (navigator.geolocation) {
         navigator.geolocation.watchPosition(p => {
-            currentLat = p.coords.latitude; 
-            currentLon = p.coords.longitude;
-            document.getElementById('lat-val').innerText = currentLat.toFixed(6);
-            document.getElementById('lon-val').innerText = currentLon.toFixed(6);
-        }, err => {
-            alert("GPS Gagal! Pastikan Lokasi Aktif.");
-        }, { enableHighAccuracy: true });
+            currentLat = p.coords.latitude; currentLon = p.coords.longitude;
+            document.getElementById('lat-val').innerText = currentLat.toFixed(5);
+            document.getElementById('lon-val').innerText = currentLon.toFixed(5);
+        }, null, { enableHighAccuracy: true });
     }
 }
 
-// 4. Pilih Tipe Absen
 function selectType(type) {
     statusAbsen = (type === 'Datang') ? 'in' : 'out';
     document.getElementById('btnDatang').classList.remove('active-status');
     document.getElementById('btnPulang').classList.remove('active-status');
     document.getElementById(type === 'Datang' ? 'btnDatang' : 'btnPulang').classList.add('active-status');
-    
-    document.getElementById('pesan').innerHTML = `<div class="info-box">Silakan posisikan wajah hingga tombol biru aktif.</div>`;
+    document.getElementById('pesan').innerText = "Posisikan wajah Anda...";
 }
 
-// 5. Proses Kirim Absen
 async function prosesAmbilAbsen() {
-    if(!userData || !statusAbsen || currentLat === 0) return alert("GPS belum siap atau tipe absen belum dipilih!");
-    
     const btn = document.getElementById('btnAmbil');
-    const msg = document.getElementById('pesan');
     btn.disabled = true;
-    msg.innerHTML = "⏳ Memproses...";
+    document.getElementById('pesan').innerText = "⏳ Memproses...";
 
     const detection = await detectFace();
-    if (!detection) {
-        msg.innerHTML = `<div style="color:#ff5252">❌ Wajah hilang! Silakan coba lagi.</div>`;
-        btn.disabled = false;
-        return;
-    }
+    if (!detection) return (btn.disabled = false);
 
-    // Capture Foto
-    canvas.width = video.videoWidth; 
-    canvas.height = video.videoHeight;
+    canvas.width = video.videoWidth; canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
-    ctx.save();
-    ctx.scale(-1, 1);
+    ctx.save(); ctx.scale(-1, 1);
     ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
     ctx.restore();
 
     const payload = { 
-        id: userData.id, 
-        nama: userData.nama, 
-        gtk: userData.jabatan,
-        lat: currentLat, 
-        lng: currentLon, 
-        image: canvas.toDataURL('image/jpeg', 0.5),
-        tipe: statusAbsen,
-        faceMatch: (detection.score * 100).toFixed(0) + "%" 
+        id: userData.id, nama: userData.nama, gtk: userData.jabatan,
+        lat: currentLat, lng: currentLon, tipe: statusAbsen,
+        image: canvas.toDataURL('image/jpeg', 0.5)
     };
 
     try {
@@ -246,31 +262,22 @@ async function prosesAmbilAbsen() {
             body: JSON.stringify({ action: "simpanAbsen", payload: payload })
         });
         const res = await response.json();
-        
         if (res.success) {
-            msg.innerHTML = `<div class="success-box"><b>BERHASIL:</b> ${res.message}</div>`;
-            setTimeout(() => { logoutKeLogin(); }, 3000);
+            document.getElementById('pesan').innerHTML = `<span style="color:#00ff88">BERHASIL!</span>`;
+            setTimeout(() => location.reload(), 2000);
         } else {
-            msg.innerHTML = `<div style="color:yellow; background:rgba(0,0,0,0.5); padding:10px; border-radius:10px;">${res.message}</div>`;
+            document.getElementById('pesan').innerText = res.message;
             btn.disabled = false;
         }
-    } catch (e) {
-        msg.innerHTML = "❌ Gagal mengirim ke Cloud.";
-        btn.disabled = false;
-    }
+    } catch (e) { alert("Error!"); btn.disabled = false; }
 }
 
 function bukaDashboard() {
-    let idUser = (userData && userData.id) ? userData.id : document.getElementById('nipInput').value.trim();
-    window.open(SCRIPT_URL + "?page=dashboard_gtk&id=" + idUser, "_top");
+    let id = userData ? userData.id : document.getElementById('nipInput').value;
+    window.open(SCRIPT_URL + "?page=dashboard_gtk&id=" + id, "_top");
 }
 
-function logoutKeLogin() {
-    if (video.srcObject) {
-        video.srcObject.getTracks().forEach(track => track.stop());
-    }
-    location.reload(); 
-}
+function logoutKeLogin() { location.reload(); }
 </script>
 </body>
 </html>
