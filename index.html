@@ -163,15 +163,15 @@ async function detectFace() {
     
     // Konfigurasi yang lebih 'ringan' tapi tetap akurat
     const options = new faceapi.TinyFaceDetectorOptions({ 
-        inputSize: 224,      // Lebih ringan, mengurangi lag di HP
-        scoreThreshold: 0.3  // Lebih peka terhadap wajah di kondisi cahaya minim
+        inputSize: 320,      // Lebih ringan, mengurangi lag di HP
+        scoreThreshold: 0.1  // Lebih peka terhadap wajah di kondisi cahaya minim
     });
 
     const detection = await faceapi.detectSingleFace(video, options);
     
     if (detection) {
         // Cek jika skor sudah mencukupi threshold baru
-        if (detection.score > 0.3) {
+        if (detection.score > 0.1) {
             faceStatus.innerText = "Wajah Terdeteksi ✓";
             faceStatus.style.color = "#00ff88";
             
@@ -295,6 +295,7 @@ function logoutKeLogin() { location.reload(); }
 </script>
 </body>
 </html>
+
 
 
 
