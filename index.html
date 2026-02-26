@@ -7,91 +7,30 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
+        /* ... Style tetap sama seperti sebelumnya ... */
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { 
-            font-family: 'Poppins', sans-serif; 
-            background: #1e3c72; 
-            background: linear-gradient(180deg, #1e3c72 0%, #121212 100%);
-            color: white; margin: 0; padding: 0;
-            display: flex; justify-content: center; min-height: 100vh;
-        }
-
+        body { font-family: 'Poppins', sans-serif; background: #1e3c72; background: linear-gradient(180deg, #1e3c72 0%, #121212 100%); color: white; margin: 0; padding: 0; display: flex; justify-content: center; min-height: 100vh; }
         .container { width: 100%; max-width: 400px; padding: 15px; text-align: center; }
         .logo-school { width: 50px; margin-top: 5px; }
         h2 { font-size: 1rem; margin: 5px 0 0; letter-spacing: 1px; }
         h3 { font-size: 0.7rem; font-weight: 300; opacity: 0.8; margin-bottom: 10px; }
-        
-        #clock { font-size: 1.8rem; font-weight: 600; color: #00ff88; margin: 5px 0 15px 0; }
-
-        .card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 20px;
-            border-radius: 15px;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        input { 
-            width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 10px; 
-            border: none; font-size: 1rem; text-align: center; font-family: inherit;
-        }
-
-        .user-info { 
-            background: rgba(255,255,255,0.95); color: #1e3c72; 
-            padding: 10px; border-radius: 12px; margin-bottom: 15px; 
-            border-left: 5px solid #2196f3;
-        }
-        
-        .camera-box {
-            position: relative;
-            width: 100%; 
-            aspect-ratio: 3/4;
-            max-height: 350px;
-            margin: 0 auto 15px;
-            border: 3px solid #fff;
-            border-radius: 15px;
-            overflow: hidden;
-            background: #000;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-
-        /* Filter kontras membantu AI melihat fitur wajah lebih tajam */
-        #webcam { 
-            width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); 
-            filter: brightness(1.1) contrast(1.1);
-        }
-
-        /* Garis panduan Oval */
-        .face-guide {
-            position: absolute;
-            top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            width: 65%; height: 70%;
-            border: 2px dashed rgba(255,255,255,0.5);
-            border-radius: 50%;
-            pointer-events: none;
-        }
-
-        #face-status { 
-            position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
-            background: rgba(0,0,0,0.6); padding: 3px 12px; border-radius: 20px;
-            font-size: 0.65rem; color: #ffeb3b; z-index: 10;
-        }
-
+        #clock { font-size: 1.8rem; font-weight: 600; color: #00ff88; margin: 5px 0 15px 0; text-shadow: 0 0 10px rgba(0,255,136,0.3); }
+        .card { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1); }
+        input { width: 100%; padding: 12px; margin-bottom: 12px; border-radius: 10px; border: none; font-size: 1rem; text-align: center; font-family: inherit; }
+        .user-info { background: rgba(255,255,255,0.95); color: #1e3c72; padding: 10px; border-radius: 12px; margin-bottom: 15px; border-left: 5px solid #2196f3; }
+        .camera-box { position: relative; width: 100%; aspect-ratio: 3/4; max-height: 350px; margin: 0 auto 15px; border: 3px solid #fff; border-radius: 15px; overflow: hidden; background: #000; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        #webcam { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); filter: brightness(1.1) contrast(1.1); }
+        .face-guide { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 65%; height: 70%; border: 2px dashed rgba(255,255,255,0.5); border-radius: 50%; pointer-events: none; transition: 0.3s; }
+        .active-guide { border: 3px solid #00ff88; box-shadow: 0 0 15px #00ff88; }
+        #face-status { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.6); padding: 3px 12px; border-radius: 20px; font-size: 0.65rem; color: #ffeb3b; z-index: 10; }
         .button-group { display: flex; gap: 8px; margin-bottom: 10px; }
-        .btn { 
-            border: none; border-radius: 10px; font-weight: 600; font-family: inherit;
-            cursor: pointer; transition: 0.2s;
-        }
-
+        .btn { border: none; border-radius: 10px; font-weight: 600; font-family: inherit; cursor: pointer; transition: 0.2s; }
         .btn-status { flex: 1; padding: 12px; font-size: 0.8rem; opacity: 0.4; color: white; }
         .btn-datang { background: #00c853; }
         .btn-pulang { background: #ff5252; }
         .btn-ambil { width: 100%; padding: 15px; background: #2196f3; color: white; font-size: 1rem; margin-top: 5px; }
-        
         .btn.active-status { opacity: 1; border: 2px solid white; transform: scale(1.02); }
         .btn:disabled { background: #666 !important; opacity: 0.3 !important; }
-
         #pesan { font-size: 0.8rem; margin: 10px 0; min-height: 1.2em; font-weight: 600; }
         .nav-btn { background: white; color: #1e3c72; width: 100%; padding: 12px; border: none; border-radius: 10px; font-weight: 600; font-size: 0.8rem; margin-top: 10px; }
         .logout-btn { background: none; color: white; border: 1px solid rgba(255,255,255,0.3); padding: 6px 15px; border-radius: 20px; font-size: 0.7rem; margin-top: 15px; cursor: pointer; }
@@ -130,76 +69,77 @@
 
         <button onclick="prosesAmbilAbsen()" id="btnAmbil" class="btn btn-ambil" disabled>📸 AMBIL ABSEN</button>
         <div id="pesan"></div>
-
         <button onclick="bukaDashboard()" class="nav-btn">🏠 MONITORING KEHADIRAN</button>
         <button onclick="logoutKeLogin()" class="logout-btn">Keluar / Ganti Akun</button>
     </div>
 </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/a/guru.sma.belajar.id/macros/s/AKfycbyOWkkDREx-TQj3v7hycUFkhweT2VRqIphq6KxV-J4dYmK0n3zQHvPGVsLVaeTWXpNB/exec";
+// AMBIL URL DARI GAS
+const SCRIPT_URL = "<?= getAppUrl() ?>"; 
 
 let currentLat = 0, currentLon = 0, userData = null, statusAbsen = ""; 
 let modelsLoaded = false;
 const video = document.getElementById('webcam');
-const canvas = document.getElementById('canvas');
 const faceStatus = document.getElementById('face-status');
+const faceGuide = document.querySelector('.face-guide');
 
+// --- 1. FUNGSI JAM (DIJALANKAN PALING AWAL) ---
+function updateClock() {
+    const sekarang = new Date();
+    document.getElementById('clock').innerText = sekarang.toLocaleTimeString('id-ID', {
+        hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+    });
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// --- 2. LOAD MODELS AI (BACKGROUND) ---
 async function loadModels() {
     try {
         const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
-        // Menggunakan SSDMobilenetv1 untuk akurasi lebih baik di HP
         await faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL);
         modelsLoaded = true;
         faceStatus.innerText = "AI Siap. Pilih Tipe Absen.";
     } catch (e) {
-        faceStatus.innerText = "Gagal memuat AI.";
+        faceStatus.innerText = "Gagal memuat AI. Periksa Koneksi.";
     }
 }
 loadModels();
 
-setInterval(() => { 
-    document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID'); 
-}, 1000);
-
+// --- 3. DETEKSI WAJAH ---
 async function detectFace() {
-    if (!modelsLoaded || !video.srcObject) return null;
+    if (!modelsLoaded || !video.srcObject || video.paused) return null;
     
-    // Threshold 0.35 cukup sensitif tapi akurat
-    const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.35 });
+    const options = new faceapi.SsdMobilenetv1Options({ minConfidence: 0.4 });
     const detection = await faceapi.detectSingleFace(video, options);
     
     if (detection) {
         faceStatus.innerText = "Wajah Terdeteksi ✓";
         faceStatus.style.color = "#00ff88";
-        if (statusAbsen) {
-            document.getElementById('btnAmbil').disabled = false;
-        }
+        faceGuide.classList.add('active-guide');
+        if (statusAbsen) document.getElementById('btnAmbil').disabled = false;
         return detection;
     }
     
-    faceStatus.innerText = "Dekatkan Wajah ke Oval";
+    faceStatus.innerText = "Posisikan Wajah di Oval";
     faceStatus.style.color = "#ffeb3b";
+    faceGuide.classList.remove('active-guide');
     document.getElementById('btnAmbil').disabled = true;
     return null;
 }
 
-// Deteksi berjalan hanya jika user sudah login
-setInterval(() => { if (userData) detectFace(); }, 800);
+setInterval(() => { if (userData) detectFace(); }, 600);
 
-async function prosesLogin() {
+// --- 4. LOGIKA LOGIN ---
+function prosesLogin() {
     const nip = document.getElementById('nipInput').value.trim();
     if (!nip) return alert("Masukkan ID/NIP!");
+    
     const btn = document.getElementById('btnLogin');
     btn.disabled = true; btn.innerText = "⏳ Mengecek...";
 
-    try {
-        const response = await fetch(SCRIPT_URL, {
-            method: "POST",
-            body: JSON.stringify({ action: "login", nip: nip })
-        });
-        const res = await response.json();
-
+    google.script.run.withSuccessHandler(res => {
         if (res.success) {
             userData = res;
             document.getElementById('displayNama').innerText = res.nama;
@@ -211,84 +151,79 @@ async function prosesLogin() {
             if (!res.bolehAbsen) {
                 document.getElementById('btnDatang').disabled = true;
                 document.getElementById('btnPulang').disabled = true;
-                document.getElementById('pesan').innerHTML = `<div style="color:yellow; font-size:0.7rem;">⚠️ ${res.pesanWaktu}</div>`;
+                document.getElementById('pesan').innerHTML = `<div style="color:#ffeb3b; font-size:0.75rem;">⚠️ ${res.pesanWaktu}</div>`;
             } else {
                 document.getElementById('btnDatang').disabled = res.sudahDatang;
                 document.getElementById('btnPulang').disabled = res.sudahPulang;
             }
         } else {
-            alert(res.message); btn.disabled = false; btn.innerText = "MASUK";
+            alert(res.message);
+            btn.disabled = false; btn.innerText = "MASUK";
         }
-    } catch (err) { alert("Gagal koneksi!"); btn.disabled = false; }
+    }).validasiID(nip);
 }
 
 async function initCameraAndGPS() {
     try { 
         const stream = await navigator.mediaDevices.getUserMedia({ 
-            video: { facingMode: "user", width: { ideal: 640 }, height: { ideal: 480 } } 
+            video: { facingMode: "user", width: 640, height: 480 } 
         });
         video.srcObject = stream;
-    } catch (err) { alert("Kamera diblokir! Izinkan akses kamera."); }
+    } catch (err) { alert("Kamera Error: Izinkan akses kamera di browser."); }
 
     if (navigator.geolocation) {
-        navigator.geolocation.watchPosition(p => {
+        navigator.geolocation.getCurrentPosition(p => {
             currentLat = p.coords.latitude; currentLon = p.coords.longitude;
-        }, null, { enableHighAccuracy: true });
+        }, err => alert("GPS Error: Aktifkan Lokasi/GPS Anda."), { enableHighAccuracy: true });
     }
 }
 
 function selectType(type) {
     statusAbsen = (type === 'Datang') ? 'in' : 'out';
-    document.getElementById('btnDatang').classList.remove('active-status');
-    document.getElementById('btnPulang').classList.remove('active-status');
-    document.getElementById(type === 'Datang' ? 'btnDatang' : 'btnPulang').classList.add('active-status');
-    document.getElementById('pesan').innerText = "Posisikan wajah Anda...";
+    document.getElementById('btnDatang').classList.toggle('active-status', type === 'Datang');
+    document.getElementById('btnPulang').classList.toggle('active-status', type === 'Pulang');
+    document.getElementById('pesan').innerText = "Silakan ambil foto...";
 }
 
 async function prosesAmbilAbsen() {
     const btn = document.getElementById('btnAmbil');
     btn.disabled = true;
-    document.getElementById('pesan').innerText = "⏳ Memproses...";
+    document.getElementById('pesan').innerText = "⏳ Mengirim Data...";
 
     const detection = await detectFace();
     if (!detection) {
-        alert("Wajah hilang! Posisikan kembali.");
-        btn.disabled = false;
-        return;
+        alert("Wajah tidak fokus. Coba lagi.");
+        btn.disabled = false; return;
     }
 
+    const canvas = document.getElementById('canvas');
     canvas.width = video.videoWidth; canvas.height = video.videoHeight;
     const ctx = canvas.getContext('2d');
-    ctx.save(); ctx.scale(-1, 1);
-    ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
-    ctx.restore();
+    ctx.translate(canvas.width, 0); ctx.scale(-1, 1);
+    ctx.drawImage(video, 0, 0);
 
     const payload = { 
         id: userData.id, nama: userData.nama, gtk: userData.jabatan,
         lat: currentLat, lng: currentLon, tipe: statusAbsen,
-        faceMatch: detection.score, // Mengirim skor ke backend
-        image: canvas.toDataURL('image/jpeg', 0.6)
+        faceMatch: detection.score,
+        image: canvas.toDataURL('image/jpeg', 0.5)
     };
 
-    try {
-        const response = await fetch(SCRIPT_URL, {
-            method: "POST",
-            body: JSON.stringify({ action: "simpanAbsen", payload: payload })
-        });
-        const res = await response.json();
+    google.script.run.withSuccessHandler(res => {
         if (res.success) {
-            document.getElementById('pesan').innerHTML = `<span style="color:#00ff88">BERHASIL!</span>`;
-            setTimeout(() => location.reload(), 2000);
+            document.getElementById('pesan').innerHTML = `<span style="color:#00ff88">${res.message}</span>`;
+            setTimeout(() => location.reload(), 2500);
         } else {
-            document.getElementById('pesan').innerText = res.message;
+            alert(res.message);
+            document.getElementById('pesan').innerText = "";
             btn.disabled = false;
         }
-    } catch (e) { alert("Error Server!"); btn.disabled = false; }
+    }).simpanDataKeSheet(payload);
 }
 
 function bukaDashboard() {
-    let id = userData ? userData.id : document.getElementById('nipInput').value;
-    window.open(SCRIPT_URL + "?page=dashboard_gtk&id=" + id, "_top");
+    const id = userData ? userData.id : "";
+    window.top.location.href = SCRIPT_URL + "?page=dashboard_gtk&id=" + id;
 }
 
 function logoutKeLogin() { location.reload(); }
