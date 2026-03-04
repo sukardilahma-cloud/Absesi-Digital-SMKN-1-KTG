@@ -338,30 +338,41 @@
     }
 
     /* --- DASHBOARD --- */
-    async function loadDashboard() {
-      const tbody = document.getElementById('dashTableBody');
-      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">⏳ Memuat...</td></tr>';
-      
-      const res = await apiGet({ action: 'getDashboard' });
-      if(res) {
-        document.getElementById('valTotal').innerText = res.stats.total;
-        document.getElementById('valHadirCount').innerText = res.stats.hadir;
-        document.getElementById('valLate').innerText = res.stats.terlambat;
-        document.getElementById('valEarly').innerText = res.stats.pulangAwal;
-        
-        tbody.innerHTML = res.table.map(r => `
-          <tr>
-            <td><b>${r.nama}</b></td>
-            <td><small>${r.jabatan}</small></td>
-            <td><span class="badge ${r.kehadiran === 'Hadir' ? 'bg-green' : 'bg-red'}">${r.kehadiran}</span></td>
-            <td>${r.jam_datang}</td>
-            <td>${r.jam_pulang}</td>
-            <td>${r.foto_datang ? `<img src="${r.foto_datang}" width="35" onclick="bukaModal('${r.foto_datang}', '${r.nama}')" style="cursor:pointer; border-radius:4px;">` : '-'}</td>
-            <td><small>${r.keterangan}</small></td>
-          </tr>
-        `).join('');
-      }
-    }
+   async function loadDashboard() {
+  const tbody = document.getElementById('dashTableBody');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">⏳ Memuat...</td></tr>';
+  
+  const res = await apiGet({ action: 'getDashboard' });
+  if(res) {
+    document.getElementById('valTotal').innerText = res.stats.total;
+    document.getElementById('valHadirCount').innerText = res.stats.hadir;
+    document.getElementById('valLate').innerText = res.stats.terlambat;
+    document.getElementById('valEarly').innerText = res.stats.pulangAwal;
+    
+    tbody.innerHTML = res.table.map(r => {
+      // Menyiapkan HTML untuk kolom Foto (Datang & Pulang)
+      let htmlFoto = `
+        <div style="display:flex; gap:4px; justify-content:center;">
+          ${r.foto_datang ? `<img src="${r.foto_datang}" width="35" height="35" onclick="bukaModal('${r.foto_datang}', '${r.nama}')" style="cursor:pointer; border-radius:4px; object-fit:cover;" title="Foto Datang">` : ''}
+          ${r.foto_pulang ? `<img src="${r.foto_pulang}" width="35" height="35" onclick="bukaModal('${r.foto_pulang}', '${r.nama}')" style="cursor:pointer; border-radius:4px; object-fit:cover;" title="Foto Pulang">` : ''}
+          ${!r.foto_datang && !r.foto_pulang ? '-' : ''}
+        </div>
+      `;
+
+      return `
+        <tr>
+          <td><b>${r.nama}</b></td>
+          <td><small>${r.jabatan}</small></td>
+          <td><span class="badge ${r.kehadiran === 'Hadir' ? 'bg-green' : 'bg-red'}">${r.kehadiran}</span></td>
+          <td style="text-align:center;">${r.jam_datang}</td>
+          <td style="text-align:center;">${r.jam_pulang}</td>
+          <td style="text-align:center;">${htmlFoto}</td>
+          <td><small>${r.keterangan}</small></td>
+        </tr>
+      `;
+    }).join('');
+  }
+}
 
     /* --- GTK CRUD --- */
     async function fetchGTK() {
