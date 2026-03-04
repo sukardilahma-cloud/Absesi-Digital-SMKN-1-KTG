@@ -350,15 +350,21 @@
     document.getElementById('valEarly').innerText = res.stats.pulangAwal;
     
     tbody.innerHTML = res.table.map(r => {
-      // --- LOGIKA WARNA BADGE ---
-      // Jika status adalah "Terlambat" atau keterangan mengandung "Terlambat", warna merah
-      const isLate = r.kehadiran.toLowerCase().includes("terlambat") || r.keterangan.toLowerCase().includes("terlambat");
-      const badgeClass = isLate ? 'bg-red' : (r.kehadiran === 'Hadir' ? 'bg-green' : 'bg-red');
+      // 1. Ambil teks dan ubah ke huruf kecil agar pengecekan tidak meleset
+      const kehadiran = (r.kehadiran || "").toLowerCase();
+      const keterangan = (r.keterangan || "").toLowerCase();
+
+      // 2. Tentukan apakah statusnya harus MERAH
+      // Merah jika: mengandung kata 'terlambat', atau statusnya 'tidak hadir'
+      const isLate = kehadiran.includes("terlambat") || keterangan.includes("terlambat");
+      const isAbsent = kehadiran.includes("tidak hadir");
+      
+      const badgeClass = (isLate || isAbsent) ? 'bg-red' : 'bg-green';
 
       let htmlFoto = `
         <div style="display:flex; gap:4px; justify-content:center;">
-          ${r.foto_datang ? `<img src="${r.foto_datang}" width="35" height="35" onclick="bukaModal('${r.foto_datang}', '${r.nama}')" style="cursor:pointer; border-radius:4px; object-fit:cover;" title="Foto Datang">` : ''}
-          ${r.foto_pulang ? `<img src="${r.foto_pulang}" width="35" height="35" onclick="bukaModal('${r.foto_pulang}', '${r.nama}')" style="cursor:pointer; border-radius:4px; object-fit:cover;" title="Foto Pulang">` : ''}
+          ${r.foto_datang ? `<img src="${r.foto_datang}" width="35" height="35" onclick="bukaModal('${r.foto_datang}', '${r.nama}')" style="cursor:pointer; border-radius:4px; object-fit:cover;">` : ''}
+          ${r.foto_pulang ? `<img src="${r.foto_pulang}" width="35" height="35" onclick="bukaModal('${r.foto_pulang}', '${r.nama}')" style="cursor:pointer; border-radius:4px; object-fit:cover;">` : ''}
           ${!r.foto_datang && !r.foto_pulang ? '-' : ''}
         </div>
       `;
