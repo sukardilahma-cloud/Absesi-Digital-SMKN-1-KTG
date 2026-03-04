@@ -338,7 +338,7 @@
     }
 
     /* --- DASHBOARD --- */
-   async function loadDashboard() {
+  async function loadDashboard() {
   const tbody = document.getElementById('dashTableBody');
   tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">⏳ Memuat...</td></tr>';
   
@@ -350,7 +350,11 @@
     document.getElementById('valEarly').innerText = res.stats.pulangAwal;
     
     tbody.innerHTML = res.table.map(r => {
-      // Menyiapkan HTML untuk kolom Foto (Datang & Pulang)
+      // --- LOGIKA WARNA BADGE ---
+      // Jika status adalah "Terlambat" atau keterangan mengandung "Terlambat", warna merah
+      const isLate = r.kehadiran.toLowerCase().includes("terlambat") || r.keterangan.toLowerCase().includes("terlambat");
+      const badgeClass = isLate ? 'bg-red' : (r.kehadiran === 'Hadir' ? 'bg-green' : 'bg-red');
+
       let htmlFoto = `
         <div style="display:flex; gap:4px; justify-content:center;">
           ${r.foto_datang ? `<img src="${r.foto_datang}" width="35" height="35" onclick="bukaModal('${r.foto_datang}', '${r.nama}')" style="cursor:pointer; border-radius:4px; object-fit:cover;" title="Foto Datang">` : ''}
@@ -363,17 +367,20 @@
         <tr>
           <td><b>${r.nama}</b></td>
           <td><small>${r.jabatan}</small></td>
-          <td><span class="badge ${r.kehadiran === 'Hadir' ? 'bg-green' : 'bg-red'}">${r.kehadiran}</span></td>
+          <td><span class="badge ${badgeClass}">${r.kehadiran}</span></td>
           <td style="text-align:center;">${r.jam_datang}</td>
           <td style="text-align:center;">${r.jam_pulang}</td>
           <td style="text-align:center;">${htmlFoto}</td>
-          <td><small>${r.keterangan}</small></td>
+          <td>
+            <small style="${r.keterangan === 'Belum absen pulang' ? 'color:#e67e22; font-weight:bold;' : ''}">
+              ${r.keterangan}
+            </small>
+          </td>
         </tr>
       `;
     }).join('');
   }
 }
-
     /* --- GTK CRUD --- */
     async function fetchGTK() {
       const data = await apiGet({ action: 'getGTKList' });
