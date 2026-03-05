@@ -369,13 +369,14 @@
 }
 
     /* --- DASHBOARD --- */
- async function loadDashboard() {
+ async function loadDashboard() { 
   const tbody = document.getElementById('dashTableBody');
   tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">⏳ Memuat...</td></tr>';
   
   const res = await apiGet({ action: 'getDashboard' });
 
   if (res) {
+
     // Update Statistik
     document.getElementById('valTotal').innerText = res.stats.total;
     document.getElementById('valHadirCount').innerText = res.stats.hadir;
@@ -384,25 +385,32 @@
 
     tbody.innerHTML = res.table.map(r => {
 
-      // Ambil dan normalisasi teks
+      // Normalisasi teks
       const kehadiran = (r.kehadiran || "").toLowerCase().trim();
       const keterangan = (r.keterangan || "").toLowerCase().trim();
 
-      // Default warna hijau
       let badgeClass = "bg-green";
+      let statusTeks = "Hadir";
 
-      // Jika terlambat atau tidak hadir → merah
-      if (
+      // Tidak Hadir
+      if (kehadiran.includes("tidak hadir") || r.jam_datang === "-") {
+        badgeClass = "bg-red";
+        statusTeks = "Tidak Hadir";
+      }
+
+      // Terlambat → tetap tulis HADIR tapi merah
+      else if (
         kehadiran.includes("terlambat") ||
-        kehadiran.includes("tidak hadir") ||
         keterangan.includes("terlambat")
       ) {
         badgeClass = "bg-red";
+        statusTeks = "Hadir";
       }
 
-      // Jika pulang awal tapi tidak terlambat → kuning
-      else if (keterangan.includes("pulang awal")) {
-        badgeClass = "bg-yellow";
+      // Hadir Normal → hijau
+      else {
+        badgeClass = "bg-green";
+        statusTeks = "Hadir";
       }
 
       // HTML Foto
@@ -426,12 +434,12 @@
         <tr>
           <td><b>${r.nama}</b></td>
           <td><small>${r.jabatan}</small></td>
-          <td><span class="badge ${badgeClass}">${r.kehadiran}</span></td>
+          <td><span class="badge ${badgeClass}">${statusTeks}</span></td>
           <td style="text-align:center;">${r.jam_datang}</td>
           <td style="text-align:center;">${r.jam_pulang}</td>
           <td style="text-align:center;">${htmlFoto}</td>
           <td>
-            <small style="${r.keterangan === 'Belum absen pulang' ? 'color:#e67e22; font-weight:bold;' : ''}">
+            <small style="${keterangan.includes('terlambat') ? 'color:#e74c3c; font-weight:bold;' : ''}">
               ${r.keterangan}
             </small>
           </td>
