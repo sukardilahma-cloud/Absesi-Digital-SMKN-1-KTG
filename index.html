@@ -6,7 +6,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
-        /* ... SEMUA STYLE ANDA TETAP SAMA ... */
         body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         .container { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); padding: 15px 20px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 90%; max-width: 400px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.2); }
         .logo-school { width: 65px; height: auto; margin-bottom: 5px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); }
@@ -14,7 +13,8 @@
         h3 { font-size: 0.85rem; margin: 0 0 5px 0; font-weight: 400; opacity: 0.9; }
         #clock { font-size: 1.4rem; font-weight: 600; margin: 0 0 10px 0; color: #00ff88; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
         .camera-box { width: 100%; height: 480px; margin-bottom: 10px; border: 3px solid #fff; border-radius: 15px; overflow: hidden; background: #000; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
-        #webcam { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+        #webcam, #photoPreview { width: 100%; height: 100%; object-fit: cover; }
+        #webcam { transform: scaleX(-1); }
         .coords-container { display: flex; gap: 6px; margin-bottom: 10px; }
         .coord-box { flex: 1; background: rgba(0, 0, 0, 0.3); padding: 5px; border-radius: 8px; font-size: 0.65rem; }
         .coord-label { display: block; font-size: 0.5rem; color: #bbb; font-weight: bold; }
@@ -24,6 +24,8 @@
         .btn-datang { background: #00c853; flex: 1; opacity: 0.5; }
         .btn-pulang { background: #ff5252; flex: 1; opacity: 0.5; }
         .btn-ambil { background: #2196f3; margin-top: 2px; width: 100%; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .btn-kirim { background: #ff9800; margin-top: 2px; width: 100%; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .btn-ulang { background: rgba(255,255,255,0.2); border: 1px solid #fff; color: white; margin-top: 5px; width: 100%; padding: 8px; border-radius: 8px; font-weight: bold; cursor: pointer; }
         .btn:disabled { background: #666; cursor: not-allowed; opacity: 0.3 !important; }
         .btn.active-status { opacity: 1; border: 2px solid white; transform: scale(1.02); }
         .user-info { margin-bottom: 10px; background: rgba(255,255,255,0.95); padding: 6px 10px; border-radius: 10px; display: none; border-left: 5px solid #2196f3; color: #333; text-align: center; }
@@ -54,7 +56,10 @@
         </div>
 
         <div class="camera-box">
+            <!-- Kamera Live -->
             <video id="webcam" autoplay playsinline></video>
+            <!-- Preview hasil tangkapan foto -->
+            <img id="photoPreview" style="display: none;" alt="Preview Foto">
             <canvas id="canvas" style="display:none;"></canvas>
         </div>
 
@@ -68,7 +73,15 @@
             <button id="btnPulang" class="btn btn-pulang" onclick="selectType('Pulang')">PULANG</button>
         </div>
 
+        <!-- Tombol Ambil Absen -->
         <button onclick="prosesAmbilAbsen()" id="btnAmbil" class="btn btn-ambil" disabled>📸 AMBIL ABSEN</button>
+        
+        <!-- Action Group Pasca Ambil Foto (Hidden Default) -->
+        <div id="postCaptureGroup" style="display: none;">
+            <button onclick="kirimAbsen()" id="btnKirim" class="btn btn-kirim">🚀 KIRIM ABSEN</button>
+            <button onclick="ulangFoto()" id="btnUlang" class="btn-ulang">🔄 Ulang Foto</button>
+        </div>
+
         <div id="pesan"></div>
         <button onclick="logoutKeLogin()" class="btn-keluar">← Keluar / Ganti Akun</button>
         <button onclick="bukaDashboard()" class="btn-home-monitoring">🏠 MONITORING KEHADIRAN</button>
@@ -76,12 +89,13 @@
 </div>
 
 <script>
-    // === KONFIGURASI ===
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx2Tcs8Z3MDqhHSDx6_Y2YIStdqN8WiWnq21mS0odlkZhJ4P_YRNPSziRo9iXkC20Z3/exec"; 
 
     let currentLat = 0, currentLon = 0, userData = null, statusAbsen = ""; 
-    let modelsLoaded = false;
-    const video = document.getElementById('webcam'), canvas = document.getElementById('canvas');
+    let modelsLoaded = false, preparedPayload = null;
+    const video = document.getElementById('webcam');
+    const photoPreview = document.getElementById('photoPreview');
+    const canvas = document.getElementById('canvas');
 
     async function loadModels() {
         const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
@@ -92,13 +106,18 @@
 
     setInterval(() => { 
         document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID'); 
-        if(modelsLoaded && video.srcObject) detectFace();
+        // Hanya deteksi jika kamera sedang aktif (bukan preview foto)
+        if(modelsLoaded && video.srcObject && video.style.display !== 'none') {
+            detectFace();
+        }
     }, 1000);
 
     async function detectFace() {
         const options = new faceapi.TinyFaceDetectorOptions({ inputSize: 160, scoreThreshold: 0.5 });
         const detection = await faceapi.detectSingleFace(video, options);
-        if (detection && statusAbsen) document.getElementById('btnAmbil').disabled = false;
+        if (detection && statusAbsen && video.style.display !== 'none') {
+            document.getElementById('btnAmbil').disabled = false;
+        }
         return detection;
     }
 
@@ -110,7 +129,6 @@
         btnLogin.disabled = true;
         btnLogin.innerText = "⏳ Mengecek...";
 
-        // GANTI google.script.run dengan fetch (GET)
         fetch(`${SCRIPT_URL}?action=login&nip=${nip}`)
         .then(res => res.json())
         .then(res => {
@@ -166,24 +184,29 @@
         document.getElementById('btnDatang').classList.remove('active-status');
         document.getElementById('btnPulang').classList.remove('active-status');
         document.getElementById(type === 'Datang' ? 'btnDatang' : 'btnPulang').classList.add('active-status');
-        document.getElementById('btnAmbil').disabled = false;
+        
+        if (video.style.display !== 'none') {
+            document.getElementById('btnAmbil').disabled = false;
+        }
     }
 
+    // 1. Fungsi Ambil Foto & Tampilkan Preview
     async function prosesAmbilAbsen() {
         if(!userData || !statusAbsen || currentLat === 0) return alert("Tunggu GPS!");
         
         const btn = document.getElementById('btnAmbil');
         const msg = document.getElementById('pesan');
         btn.disabled = true; 
-        msg.innerHTML = "⏳ Memverifikasi...";
+        msg.innerHTML = "⏳ Memverifikasi Wajah...";
 
         const detection = await detectFace();
         if (!detection) {
-            msg.innerHTML = `<div style="color:#ff5252;">❌ Wajah tidak terdeteksi!</div>`;
+            msg.innerHTML = `<div style="color:#ff5252;">❌ Wajah tidak terdeteksi! Sertakan wajah Anda dengan jelas.</div>`;
             btn.disabled = false;
             return;
         }
 
+        // Tangkap gambar dari video ke canvas
         canvas.width = video.videoWidth; 
         canvas.height = video.videoHeight;
         const ctx = canvas.getContext('2d');
@@ -192,21 +215,57 @@
         ctx.drawImage(video, -canvas.width, 0, canvas.width, canvas.height);
         ctx.restore();
         
-        const payload = { 
+        const imageData = canvas.toDataURL('image/jpeg', 0.6);
+
+        // Siapkan Payload data untuk dikirim nanti
+        preparedPayload = { 
             id: userData.id, 
             nama: userData.nama, 
             gtk: userData.jabatan,
             lat: currentLat, 
             lng: currentLon, 
-            image: canvas.toDataURL('image/jpeg', 0.5),
+            image: imageData,
             tipe: statusAbsen,
             faceMatch: (detection.score * 100).toFixed(0)
         };
 
-        // GANTI google.script.run dengan fetch (POST)
+        // Tampilkan Hasil foto pada image preview dan sembunyikan live video
+        photoPreview.src = imageData;
+        photoPreview.style.display = 'block';
+        video.style.display = 'none';
+
+        // Tampilkan tombol Kirim & Ulang, sembunyikan tombol Ambil Foto
+        btn.style.display = 'none';
+        document.getElementById('postCaptureGroup').style.display = 'block';
+        msg.innerHTML = `<div style="color:#00ff88;">✅ Foto berhasil diambil. Klik "KIRIM ABSEN" untuk menyimpan.</div>`;
+    }
+
+    // 2. Fungsi Ulang Foto (Reset ke mode Kamera)
+    function ulangFoto() {
+        photoPreview.style.display = 'none';
+        video.style.display = 'block';
+        document.getElementById('btnAmbil').style.display = 'block';
+        document.getElementById('btnAmbil').disabled = false;
+        document.getElementById('postCaptureGroup').style.display = 'none';
+        document.getElementById('pesan').innerHTML = "";
+        preparedPayload = null;
+    }
+
+    // 3. Fungsi Kirim Absen ke Server
+    function kirimAbsen() {
+        if (!preparedPayload) return alert("Belum ada foto yang siap dikirim!");
+
+        const btnKirim = document.getElementById('btnKirim');
+        const btnUlang = document.getElementById('btnUlang');
+        const msg = document.getElementById('pesan');
+
+        btnKirim.disabled = true;
+        btnUlang.disabled = true;
+        msg.innerHTML = "⏳ Mengirim data absen...";
+
         fetch(SCRIPT_URL, {
             method: "POST",
-            body: JSON.stringify({ action: "simpanAbsen", payload: payload })
+            body: JSON.stringify({ action: "simpanAbsen", payload: preparedPayload })
         })
         .then(res => res.json())
         .then(res => {
@@ -215,25 +274,26 @@
                 setTimeout(() => { logoutKeLogin(); }, 2500); 
             } else {
                 msg.innerHTML = `<div style="color:yellow;">${res.message}</div>`;
-                btn.disabled = false;
+                btnKirim.disabled = false;
+                btnUlang.disabled = false;
             }
+        })
+        .catch(err => {
+            msg.innerHTML = `<div style="color:#ff5252;">❌ Gagal terhubung ke server. Coba lagi.</div>`;
+            btnKirim.disabled = false;
+            btnUlang.disabled = false;
         });
     }
 
     function bukaDashboard() {
         let idUser = (userData && userData.id) ? userData.id : document.getElementById('nipInput').value.trim();
-        // Karena GitHub di domain berbeda, kita buka URL Web App Google dengan parameter
         window.open(SCRIPT_URL + "?page=dashboard_gtk&id=" + idUser, "_top");
     }
 
     function logoutKeLogin() {
         if (video.srcObject) video.srcObject.getTracks().forEach(track => track.stop());
-        location.reload(); // Refresh halaman untuk reset semua state
+        location.reload();
     }
 </script>
 </body>
 </html>
-
-
-
-
