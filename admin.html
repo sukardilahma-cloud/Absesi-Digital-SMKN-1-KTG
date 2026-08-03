@@ -595,41 +595,92 @@
 
     function exportPDF() { window.print(); }
 
-    /* --- SETTINGS --- */
-   async function loadSettings() {
-  const s = await apiGet({ action: 'getSystemSettings' });
-  if(s) {
-    document.getElementById('setJamMasukGuru').value = s.jamTerlambatGuru || "";
-    document.getElementById('setJamMasukTendik').value = s.jamTerlambatTendik || "";
-    document.getElementById('setJamPulang').value = s.jamPulangMinimal || "";
-    document.getElementById('setRadius').value = s.radiusMeter || 100;
-    document.getElementById('adminUserSet').value = s.admin_user || "";
-    document.getElementById('setAbMulai').value = s.jamAbsenMulai || "";
-    document.getElementById('setAbSelesai').value = s.jamAbsenSelesai || "";
-  }
+   /* --- SETTINGS --- */
+function loadSettings() {
+  google.script.run
+    .withSuccessHandler(function(s) {
+      if (!s) return;
+
+      // Fill Input Standard
+      const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val || "";
+      };
+
+      setVal('setAbMulai', s.jamAbsenMulai);
+      setVal('setAbSelesai', s.jamAbsenSelesai);
+      setVal('setJamMasukGuru', s.jamTerlambatGuru);
+      setVal('setJamMasukTendik', s.jamTerlambatTendik);
+      setVal('setJamPulang', s.jamPulangMinimal);
+      setVal('setRadius', s.radiusMeter || 0);
+      setVal('setAdminUser', s.admin_user);
+
+      // Centang Checkbox Hari Kerja
+      if (s.hariKerja) {
+        const hariAktif = s.hariKerja.toString().split(',');
+        const checkboxes = document.querySelectorAll('input[name="hariKerja"]');
+        checkboxes.forEach(cb => {
+          cb.checked = hariAktif.includes(cb.value);
+        });
+      }
+    })
+    .withFailureHandler(function(err) {
+      console.error("Gagal memuat pengaturan:", err);
+    })
+    .getSystemSettings();
 }
 
-    async function simpanSettings() {
-  const payload = {
-    action: 'saveSystemSettings',
-    jamTerlambatGuru: document.getElementById('setJamMasukGuru').value,
-    jamTerlambatTendik: document.getElementById('setJamMasukTendik').value,
-    jamPulangMinimal: document.getElementById('setJamPulang').value, // Pastikan ID element ini ada
-    radiusMeter: document.getElementById('setRadius').value,
-    adminUser: document.getElementById('adminUserSet').value, // Input username baru
-    adminPass: document.getElementById('adminPassSet').value, // Input password baru
-    abMulai: document.getElementById('setAbMulai').value,
-    abSelesai: document.getElementById('setAbSelesai').value,
-    hariKerja: document.getElementById('setHariKerja').value
+function simpanSettings() {
+  const btn = document.querySelector('.btn-full') || document.querySelector('#view-settings .btn-primary');
+  const originalText = btn ? btn.innerText : "💾 Perbarui Pengaturan";
+
+  if (btn) {
+    btn.innerText = "⏳ Menyimpan...";
+    btn.disabled = true;
+  }
+
+  // Helper aman ambil value elemen
+  const getValue = (id) => {
+    const el = document.getElementById(id);
+    return el ? el.value : "";
   };
 
-  const btn = document.querySelector("#view-settings .btn-primary");
-  const originalText = btn.innerText;
-  
-  btn.innerText = "⏳ Menyimpan...";
-  const res = await apiCall(payload);
-  alert(res);
-  btn.innerText = originalText;
+  // Ambil checklist hari kerja
+  const hariChecked = Array.from(document.querySelectorAll('input[name="hariKerja"]:checked'))
+                           .map(cb => cb.value)
+                           .join(',');
+
+  const data = {
+    jamAbsenMulai: getValue('setAbMulai'),
+    jamAbsenSelesai: getValue('setAbSelesai'),
+    jamTerlambatGuru: getValue('setJamMasukGuru'),
+    jamTerlambatTendik: getValue('setJamMasukTendik'),
+    jamPulangMinimal: getValue('setJamPulang'),
+    radiusMeter: getValue('setRadius'),
+    admin_user: getValue('setAdminUser'),
+    admin_pass: getValue('setAdminPass'), // Pastikan di HTML ID elemennya adalah "setAdminPass"
+    hariKerja: hariChecked
+  };
+
+  google.script.run
+    .withSuccessHandler(function(msg) {
+      alert(msg || "Pengaturan berhasil diperbarui!");
+      if (btn) {
+        btn.innerText = originalText;
+        btn.disabled = false;
+      }
+      // Kosongkan field password setelah berhasil disimpan demi keamanan
+      const passEl = document.getElementById('setAdminPass');
+      if (passEl) passEl.value = "";
+    })
+    .withFailureHandler(function(err) {
+      alert("Gagal menyimpan: " + err.message);
+      if (btn) {
+        btn.innerText = originalText;
+        btn.disabled = false;
+      }
+    })
+    .saveSystemSettings(data);
 }
 
     /* --- UTILS --- */
