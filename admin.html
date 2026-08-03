@@ -384,69 +384,62 @@
     document.getElementById('valEarly').innerText = res.stats.pulangAwal;
 
     tbody.innerHTML = res.table.map(r => {
+  // Normalisasi teks
+  const kehadiran = (r.kehadiran || "").toLowerCase().trim();
+  const keterangan = (r.keterangan || "").toLowerCase().trim();
 
-      // Normalisasi teks
-      const kehadiran = (r.kehadiran || "").toLowerCase().trim();
-      const keterangan = (r.keterangan || "").toLowerCase().trim();
+  let badgeClass = "bg-green";
+  let statusTeks = "Hadir";
 
-      let badgeClass = "bg-green";
-      let statusTeks = "Hadir";
-
-      // Tidak Hadir
-      if (kehadiran.includes("tidak hadir") || r.jam_datang === "-") {
-        badgeClass = "bg-red";
-        statusTeks = "Tidak Hadir";
-      }
-
-      // Terlambat → tetap tulis HADIR tapi merah
-      else if (
-        kehadiran.includes("terlambat") ||
-        keterangan.includes("Belum Absen Pulang")
-      ) {
-        badgeClass = "bg-red";
-        statusTeks = "Hadir";
-      }
-
-      // Hadir Normal → hijau
-      else {
-        badgeClass = "bg-green";
-        statusTeks = "Hadir";
-      }
-
-      // HTML Foto
-      let htmlFoto = `
-        <div style="display:flex; gap:4px; justify-content:center;">
-          ${r.foto_datang ? 
-            `<img src="${r.foto_datang}" width="35" height="35"
-              onclick="bukaModal('${r.foto_datang}', '${r.nama}')"
-              style="cursor:pointer; border-radius:4px; object-fit:cover;">` : ''}
-
-          ${r.foto_pulang ? 
-            `<img src="${r.foto_pulang}" width="35" height="35"
-              onclick="bukaModal('${r.foto_pulang}', '${r.nama}')"
-              style="cursor:pointer; border-radius:4px; object-fit:cover;">` : ''}
-
-          ${!r.foto_datang && !r.foto_pulang ? '-' : ''}
-        </div>
-      `;
-
-      return `
-        <tr>
-          <td><b>${r.nama}</b></td>
-          <td><small>${r.jabatan}</small></td>
-          <td><span class="badge ${badgeClass}">${statusTeks}</span></td>
-          <td style="text-align:center;">${r.jam_datang}</td>
-          <td style="text-align:center;">${r.jam_pulang}</td>
-          <td style="text-align:center;">${htmlFoto}</td>
-          <td>
-            <small style="${keterangan.includes('terlambat') ? 'color:#e74c3c; font-weight:bold;' : ''}">
-              ${r.keterangan}
-            </small>
-          </td>
-        </tr>
-      `;
-    }).join('');
+  // 1. Jika memang Tidak Hadir / Alpha / Tanpa Keterangan
+  if (kehadiran.includes("tidak hadir") || r.jam_datang === "-" || r.jam_datang === "") {
+    badgeClass = "bg-red";
+    statusTeks = "Tidak Hadir";
   }
+  // 2. Jika Hadir tapi Terlambat
+  else if (kehadiran.includes("terlambat")) {
+    badgeClass = "bg-red";
+    statusTeks = "Hadir (Terlambat)";
+  }
+  // 3. Hadir Normal
+  else {
+    badgeClass = "bg-green";
+    statusTeks = "Hadir";
+  }
+
+  // HTML Foto
+  let htmlFoto = `
+    <div style="display:flex; gap:4px; justify-content:center;">
+      ${r.foto_datang ? 
+        `<img src="${r.foto_datang}" width="35" height="35"
+          onclick="bukaModal('${r.foto_datang}', '${r.nama}')"
+          style="cursor:pointer; border-radius:4px; object-fit:cover;">` : ''}
+
+      ${r.foto_pulang ? 
+        `<img src="${r.foto_pulang}" width="35" height="35"
+          onclick="bukaModal('${r.foto_pulang}', '${r.nama}')"
+          style="cursor:pointer; border-radius:4px; object-fit:cover;">` : ''}
+
+      ${!r.foto_datang && !r.foto_pulang ? '-' : ''}
+    </div>
+  `;
+
+  return `
+    <tr style="${statusTeks === 'Tidak Hadir' ? 'background-color: #fef2f2;' : ''}">
+      <td><b>${r.nama}</b></td>
+      <td><small>${r.jabatan}</small></td>
+      <td><span class="badge ${badgeClass}">${statusTeks}</span></td>
+      <td style="text-align:center;">${r.jam_datang || '-'}</td>
+      <td style="text-align:center;">${r.jam_pulang || '-'}</td>
+      <td style="text-align:center;">${htmlFoto}</td>
+      <td>
+        <small style="${statusTeks === 'Tidak Hadir' || keterangan.includes('terlambat') ? 'color:#e74c3c; font-weight:bold;' : ''}">
+          ${r.keterangan || (statusTeks === 'Tidak Hadir' ? 'Tidak Absen' : '-')}
+        </small>
+      </td>
+    </tr>
+  `;
+}).join('');  }
 }
     /* --- GTK CRUD --- */
     async function fetchGTK() {
@@ -520,22 +513,78 @@
       renderTabelRekap(data);
     }
 
-    function renderTabelRekap(data) {
-      const container = document.getElementById('container-rekap-hasil');
-      if (!data || data.length === 0) {
-        container.innerHTML = "Data tidak ditemukan.";
-        return;
-      }
-      // Logika grouping dan render tabel rekap (sama dengan kode asli Anda)
-      let html = '<div id="rekapPrintArea">';
-      // ... (sisipkan logika grouped rekap Anda di sini jika ingin detail)
-      html += '<table border="1"><thead><tr><th>No</th><th>Nama</th><th>Status</th><th>Masuk</th><th>Pulang</th></tr></thead><tbody>';
-      data.forEach((r, i) => {
-        html += `<tr><td>${i+1}</td><td>${r.nama}</td><td>${r.kehadiran}</td><td>${r.jam_datang}</td><td>${r.jam_pulang}</td></tr>`;
-      });
-      html += '</tbody></table></div>';
-      container.innerHTML = html;
-    }
+   function renderTabelRekap(data) {
+  const container = document.getElementById('container-rekap-hasil');
+  if (!data || data.length === 0) {
+    container.innerHTML = '<div style="text-align:center; padding:20px;">📭 Tidak ada data ditemukan.</div>';
+    return;
+  }
+
+  // Mengelompokkan data berdasarkan tanggal
+  const grouped = data.reduce((acc, curr) => {
+    if (!acc[curr.tanggal]) acc[curr.tanggal] = [];
+    acc[curr.tanggal].push(curr);
+    return acc;
+  }, {});
+
+  // Urutkan tanggal (terbaru di atas)
+  const sortedDates = Object.keys(grouped).sort((a, b) => {
+    const d1 = a.split('/').reverse().join('-');
+    const d2 = b.split('/').reverse().join('-');
+    return d2.localeCompare(d1);
+  });
+
+  let html = '<div id="rekapPrintArea">';
+
+  sortedDates.forEach(tgl => {
+    html += `
+      <div class="group-tanggal" style="margin-bottom: 50px; page-break-after: always; color: black;">
+        <div class="kop-surat" style="text-align: center; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 15px;">
+          <img src="https://smkn1ktg.sch.id/logo/logo.gif" style="width: 50px; height: auto; margin-bottom: 5px;">
+          <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase;">Rekap E-Absensi GTK</div>
+          <div style="font-size: 12pt; font-weight: bold; text-transform: uppercase;">SMK Negeri 1 Kotamobagu</div>
+          <div style="font-size: 9pt; font-weight: normal;">Tanggal Laporan: ${tgl}</div>
+        </div>
+
+        <table border="1" style="width:100%; border-collapse:collapse; font-size: 10pt;">
+          <thead>
+            <tr style="background: #f1f5f9;">
+              <th width="40" style="padding:8px;">No</th>
+              <th style="padding:8px;">Nama</th>
+              <th width="120" style="padding:8px;">Jabatan</th>
+              <th width="110" style="padding:8px;">Status</th>
+              <th width="80" style="padding:8px;">Masuk</th>
+              <th width="80" style="padding:8px;">Pulang</th>
+              <th style="padding:8px;">Keterangan</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+    grouped[tgl].forEach((r, i) => {
+      const isTidakHadir = !r.jam_datang || r.jam_datang === '-' || (r.kehadiran && r.kehadiran.toLowerCase().includes('tidak hadir'));
+      const badgeClass = isTidakHadir ? 'bg-red' : 'bg-green';
+      const statusText = isTidakHadir ? 'Tidak Hadir' : (r.kehadiran || 'Hadir');
+
+      html += `
+        <tr style="${isTidakHadir ? 'background-color: #fff1f2;' : ''}">
+          <td style="text-align:center; padding:5px;">${i + 1}</td>
+          <td style="font-weight:600; padding:5px;">${r.nama}</td>
+          <td style="text-align:center; padding:5px;">${r.jabatan}</td>
+          <td style="text-align:center; padding:5px;"><span class="badge ${badgeClass}">${statusText}</span></td>
+          <td style="text-align:center; padding:5px;">${r.jam_datang || '-'}</td>
+          <td style="text-align:center; padding:5px;">${r.jam_pulang || '-'}</td>
+          <td style="font-size:8pt; padding:5px; ${isTidakHadir ? 'color:#b91c1c; font-weight:bold;' : ''}">
+            ${r.keterangan || (isTidakHadir ? 'Tidak melakukan absensi' : '-')}
+          </td>
+        </tr>`;
+    });
+
+    html += `</tbody></table></div>`;
+  });
+
+  html += '</div>';
+  container.innerHTML = html;
+}
 
     function exportExcel() {
       TableToExcel.convert(document.querySelector("#rekapPrintArea table"), {
