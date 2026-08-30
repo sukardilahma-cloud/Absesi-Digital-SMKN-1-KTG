@@ -169,6 +169,14 @@
         </div>
       </div>
       
+      <!-- FITUR BARU: FILTER NAMA GTK -->
+      <div style="margin-top: 10px;">
+        <label style="font-size: 0.7rem; font-weight: bold; display:block; margin-bottom:5px;">FILTER NAMA GTK</label>
+        <select id="filterNama" class="btn" style="border:1px solid #ddd; width:100%; padding:8px;">
+          <option value="">-- Semua GTK --</option>
+        </select>
+      </div>
+      
       <div style="display:flex; gap:8px; margin-top:15px; flex-wrap:wrap;">
         <button class="btn btn-primary" onclick="loadRekap('custom')" style="flex:2">🔍 Tampilkan Data</button>
         <button class="btn" onclick="exportExcel()" style="background:var(--success); color:white; flex:1">📗 Excel</button>
@@ -204,7 +212,7 @@
           <label style="font-size: 0.65rem; font-weight: 800; color: #92400e; text-transform: uppercase;">Tahun</label>
           <input type="number" id="arsipTahun" value="2026" style="width: 100%; padding: 7px; border-radius: 5px; border: 1px solid #d1d5db;">
         </div>
-        <button class="btn" onclick="jalankanProsesArsip()" style="background: var(--warning); color: white; padding: 8px 12px; height: 38px;" title="Pindahkan Data">
+        <button class="btn" id="btnProsesArsip" onclick="jalankanProsesArsip()" style="background: var(--warning); color: white; padding: 8px 12px; height: 38px;" title="Pindahkan Data">
           🚀
         </button>
       </div>
@@ -240,11 +248,11 @@
     <hr style="margin:20px 0; opacity:0.2;">
     <div style="margin-bottom:15px;">
       <label>Admin Username</label>
-      <input type="text" id="adminUserSet" style="width:100%; padding:8px;">
+      <input type="text" id="setAdminUser" style="width:100%; padding:8px;">
     </div>
     <div style="margin-bottom:15px;">
       <label>Admin Password Baru (Kosongkan jika tidak ganti)</label>
-      <input type="password" id="adminPassSet" style="width:100%; padding:8px;">
+      <input type="password" id="setAdminPass" style="width:100%; padding:8px;">
     </div>
     <button class="btn btn-primary" onclick="simpanSettings()" style="width:100%">💾 Simpan Perubahan</button>
   </div>
@@ -324,123 +332,130 @@
     }
 
     function switchTab(t) {
+      const tabs = ['dash', 'gtk', 'rekap', 'settings'];
 
-  const tabs = ['dash', 'gtk', 'rekap', 'settings'];
+      tabs.forEach(id => {
+        const view = document.getElementById('view-' + id);
+        const nav = document.getElementById('nav-' + id);
 
-  tabs.forEach(id => {
-    const view = document.getElementById('view-' + id);
-    const nav = document.getElementById('nav-' + id);
+        if (view) view.style.display = (id === t) ? 'block' : 'none';
+        if (nav) nav.classList.toggle('active', id === t);
+      });
 
-    if (view) view.style.display = (id === t) ? 'block' : 'none';
-    if (nav) nav.classList.toggle('active', id === t);
-  });
+      // Load data sesuai tab
+      if (t === 'dash') {
+        loadDashboard();
+      }
 
-  // Load data sesuai tab
-  if (t === 'dash') {
-    loadDashboard();
-  }
+      if (t === 'gtk') {
+        fetchGTK();
+      }
 
-  if (t === 'gtk') {
-    fetchGTK();
-  }
+      if (t === 'rekap') {
+        populateFilterNama();
+      }
 
-  if (t === 'rekap') {
-    // Tidak auto load agar tidak berat,
-    // user klik filter dulu baru load
-  }
+      if (t === 'settings') {
+        loadSettings();
+      }
 
-  if (t === 'settings') {
-    loadSettings();
-  }
+      // AUTO TUTUP SIDEBAR JIKA LAYAR HP
+      if (window.innerWidth <= 768) {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.querySelector('.sidebar-overlay');
 
-  // 🔥 AUTO TUTUP SIDEBAR JIKA LAYAR HP
-  if (window.innerWidth <= 768) {
-    const sidebar = document.querySelector('.sidebar');
-    const overlay = document.querySelector('.sidebar-overlay');
+        if (sidebar) sidebar.classList.remove('active');
+        if (overlay) overlay.classList.remove('active');
+      }
+    }
 
-    if (sidebar) sidebar.classList.remove('active');
-    if (overlay) overlay.classList.remove('active');
-  }
-}
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('active');
+      document.querySelector('.sidebar-overlay').classList.toggle('active');
+    }
 
-   function toggleSidebar() {
-  document.querySelector('.sidebar').classList.toggle('active');
-  document.querySelector('.sidebar-overlay').classList.toggle('active');
-}
+    /* --- POPULATE FILTER NAMA GTK --- */
+    async function populateFilterNama() {
+      const selectNama = document.getElementById('filterNama');
+      if (!selectNama) return;
+      
+      const gtkList = await apiGet({ action: 'getGTKList' });
+      if (gtkList && Array.isArray(gtkList)) {
+        let options = '<option value="">-- Semua GTK --</option>';
+        gtkList.forEach(item => {
+          options += `<option value="${item.nama}">${item.nama}</option>`;
+        });
+        selectNama.innerHTML = options;
+      }
+    }
 
     /* --- DASHBOARD --- */
- async function loadDashboard() { 
-  const tbody = document.getElementById('dashTableBody');
-  tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">⏳ Memuat...</td></tr>';
-  
-  const res = await apiGet({ action: 'getDashboard' });
+    async function loadDashboard() { 
+      const tbody = document.getElementById('dashTableBody');
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">⏳ Memuat...</td></tr>';
+      
+      const res = await apiGet({ action: 'getDashboard' });
 
-  if (res) {
+      if (res) {
+        // Update Statistik
+        document.getElementById('valTotal').innerText = res.stats.total;
+        document.getElementById('valHadirCount').innerText = res.stats.hadir;
+        document.getElementById('valLate').innerText = res.stats.terlambat;
+        document.getElementById('valEarly').innerText = res.stats.pulangAwal;
 
-    // Update Statistik
-    document.getElementById('valTotal').innerText = res.stats.total;
-    document.getElementById('valHadirCount').innerText = res.stats.hadir;
-    document.getElementById('valLate').innerText = res.stats.terlambat;
-    document.getElementById('valEarly').innerText = res.stats.pulangAwal;
+        tbody.innerHTML = res.table.map(r => {
+          const kehadiran = (r.kehadiran || "").toLowerCase().trim();
+          const keterangan = (r.keterangan || "").toLowerCase().trim();
 
-    tbody.innerHTML = res.table.map(r => {
-  // Normalisasi teks
-  const kehadiran = (r.kehadiran || "").toLowerCase().trim();
-  const keterangan = (r.keterangan || "").toLowerCase().trim();
+          let badgeClass = "bg-green";
+          let statusTeks = "Hadir";
 
-  let badgeClass = "bg-green";
-  let statusTeks = "Hadir";
+          if (kehadiran.includes("tidak hadir") || r.jam_datang === "-" || r.jam_datang === "") {
+            badgeClass = "bg-red";
+            statusTeks = "Tidak Hadir";
+          } else if (kehadiran.includes("terlambat")) {
+            badgeClass = "bg-red";
+            statusTeks = "Hadir (Terlambat)";
+          } else {
+            badgeClass = "bg-green";
+            statusTeks = "Hadir";
+          }
 
-  // 1. Jika memang Tidak Hadir / Alpha / Tanpa Keterangan
-  if (kehadiran.includes("tidak hadir") || r.jam_datang === "-" || r.jam_datang === "") {
-    badgeClass = "bg-red";
-    statusTeks = "Tidak Hadir";
-  }
-  // 2. Jika Hadir tapi Terlambat
-  else if (kehadiran.includes("terlambat")) {
-    badgeClass = "bg-red";
-    statusTeks = "Hadir (Terlambat)";
-  }
-  // 3. Hadir Normal
-  else {
-    badgeClass = "bg-green";
-    statusTeks = "Hadir";
-  }
+          let htmlFoto = `
+            <div style="display:flex; gap:4px; justify-content:center;">
+              ${r.foto_datang ? 
+                `<img src="${r.foto_datang}" width="35" height="35"
+                  onclick="bukaModal('${r.foto_datang}', '${r.nama}')"
+                  style="cursor:pointer; border-radius:4px; object-fit:cover;">` : ''}
 
-  // HTML Foto
-  let htmlFoto = `
-    <div style="display:flex; gap:4px; justify-content:center;">
-      ${r.foto_datang ? 
-        `<img src="${r.foto_datang}" width="35" height="35"
-          onclick="bukaModal('${r.foto_datang}', '${r.nama}')"
-          style="cursor:pointer; border-radius:4px; object-fit:cover;">` : ''}
+              ${r.foto_pulang ? 
+                `<img src="${r.foto_pulang}" width="35" height="35"
+                  onclick="bukaModal('${r.foto_pulang}', '${r.nama}')"
+                  style="cursor:pointer; border-radius:4px; object-fit:cover;">` : ''}
 
-      ${r.foto_pulang ? 
-        `<img src="${r.foto_pulang}" width="35" height="35"
-          onclick="bukaModal('${r.foto_pulang}', '${r.nama}')"
-          style="cursor:pointer; border-radius:4px; object-fit:cover;">` : ''}
+              ${!r.foto_datang && !r.foto_pulang ? '-' : ''}
+            </div>
+          `;
 
-      ${!r.foto_datang && !r.foto_pulang ? '-' : ''}
-    </div>
-  `;
+          return `
+            <tr style="${statusTeks === 'Tidak Hadir' ? 'background-color: #fef2f2;' : ''}">
+              <td><b>${r.nama}</b></td>
+              <td><small>${r.jabatan}</small></td>
+              <td><span class="badge ${badgeClass}">${statusTeks}</span></td>
+              <td style="text-align:center;">${r.jam_datang || '-'}</td>
+              <td style="text-align:center;">${r.jam_pulang || '-'}</td>
+              <td style="text-align:center;">${htmlFoto}</td>
+              <td>
+                <small style="${statusTeks === 'Tidak Hadir' || keterangan.includes('terlambat') ? 'color:#e74c3c; font-weight:bold;' : ''}">
+                  ${r.keterangan || (statusTeks === 'Tidak Hadir' ? 'Tidak Absen' : '-')}
+                </small>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+    }
 
-  return `
-    <tr style="${statusTeks === 'Tidak Hadir' ? 'background-color: #fef2f2;' : ''}">
-      <td><b>${r.nama}</b></td>
-      <td><small>${r.jabatan}</small></td>
-      <td><span class="badge ${badgeClass}">${statusTeks}</span></td>
-      <td style="text-align:center;">${r.jam_datang || '-'}</td>
-      <td style="text-align:center;">${r.jam_pulang || '-'}</td>
-      <td style="text-align:center;">${htmlFoto}</td>
-      <td>
-        <small style="${statusTeks === 'Tidak Hadir' || keterangan.includes('terlambat') ? 'color:#e74c3c; font-weight:bold;' : ''}">
-          ${r.keterangan || (statusTeks === 'Tidak Hadir' ? 'Tidak Absen' : '-')}
-        </small>
-      </td>
-    </tr>
-  `;
-}).join('');  }
-}
     /* --- GTK CRUD --- */
     async function fetchGTK() {
       const data = await apiGet({ action: 'getGTKList' });
@@ -507,181 +522,284 @@
       container.innerHTML = "⏳ Memuat rekap...";
       const tM = document.getElementById('filterTglMulai').value;
       const tS = document.getElementById('filterTglSelesai').value;
+      const namaDipilih = document.getElementById('filterNama').value;
       
       const data = await apiGet({ action: 'getRekapData', mode, tM, tS });
-      window.dataRekapTerakhir = data;
-      renderTabelRekap(data);
+      
+      // Filter data jika ada nama spesifik yang dipilih
+      let dataFiltered = data;
+      if (namaDipilih && namaDipilih !== "") {
+        dataFiltered = data.filter(r => r.nama === namaDipilih);
+      }
+
+      window.dataRekapTerakhir = dataFiltered;
+      renderTabelRekap(dataFiltered);
     }
 
-   function renderTabelRekap(data) {
-  const container = document.getElementById('container-rekap-hasil');
-  if (!data || data.length === 0) {
-    container.innerHTML = '<div style="text-align:center; padding:20px;">📭 Tidak ada data ditemukan.</div>';
-    return;
-  }
+    function renderTabelRekap(data) {
+      const container = document.getElementById('container-rekap-hasil');
+      if (!data || data.length === 0) {
+        container.innerHTML = '<div style="text-align:center; padding:20px;">📭 Tidak ada data ditemukan.</div>';
+        return;
+      }
 
-  // Mengelompokkan data berdasarkan tanggal
-  const grouped = data.reduce((acc, curr) => {
-    if (!acc[curr.tanggal]) acc[curr.tanggal] = [];
-    acc[curr.tanggal].push(curr);
-    return acc;
-  }, {});
+      const grouped = data.reduce((acc, curr) => {
+        if (!acc[curr.tanggal]) acc[curr.tanggal] = [];
+        acc[curr.tanggal].push(curr);
+        return acc;
+      }, {});
 
-  // Urutkan tanggal (terbaru di atas)
-  const sortedDates = Object.keys(grouped).sort((a, b) => {
-    const d1 = a.split('/').reverse().join('-');
-    const d2 = b.split('/').reverse().join('-');
-    return d2.localeCompare(d1);
-  });
+      const sortedDates = Object.keys(grouped).sort((a, b) => {
+        const d1 = a.split('/').reverse().join('-');
+        const d2 = b.split('/').reverse().join('-');
+        return d2.localeCompare(d1);
+      });
 
-  let html = '<div id="rekapPrintArea">';
+      let html = '<div id="rekapPrintArea">';
 
-  sortedDates.forEach(tgl => {
-    html += `
-      <div class="group-tanggal" style="margin-bottom: 50px; page-break-after: always; color: black;">
-        <div class="kop-surat" style="text-align: center; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 15px;">
-          <img src="https://smkn1ktg.sch.id/logo/logo.gif" style="width: 50px; height: auto; margin-bottom: 5px;">
-          <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase;">Rekap E-Absensi GTK</div>
-          <div style="font-size: 12pt; font-weight: bold; text-transform: uppercase;">SMK Negeri 1 Kotamobagu</div>
-          <div style="font-size: 9pt; font-weight: normal;">Tanggal Laporan: ${tgl}</div>
-        </div>
+      sortedDates.forEach(tgl => {
+        html += `
+          <div class="group-tanggal" style="margin-bottom: 50px; page-break-after: always; color: black;">
+            <div class="kop-surat" style="text-align: center; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 15px;">
+              <img src="https://smkn1ktg.sch.id/logo/logo.gif" style="width: 50px; height: auto; margin-bottom: 5px;">
+              <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase;">Rekap E-Absensi GTK</div>
+              <div style="font-size: 12pt; font-weight: bold; text-transform: uppercase;">SMK Negeri 1 Kotamobagu</div>
+              <div style="font-size: 9pt; font-weight: normal;">Tanggal Laporan: ${tgl}</div>
+            </div>
 
-        <table border="1" style="width:100%; border-collapse:collapse; font-size: 10pt;">
-          <thead>
-            <tr style="background: #f1f5f9;">
-              <th width="40" style="padding:8px;">No</th>
-              <th style="padding:8px;">Nama</th>
-              <th width="120" style="padding:8px;">Jabatan</th>
-              <th width="110" style="padding:8px;">Status</th>
-              <th width="80" style="padding:8px;">Masuk</th>
-              <th width="80" style="padding:8px;">Pulang</th>
-              <th style="padding:8px;">Keterangan</th>
-            </tr>
-          </thead>
-          <tbody>`;
+            <table border="1" style="width:100%; border-collapse:collapse; font-size: 10pt;">
+              <thead>
+                <tr style="background: #f1f5f9;">
+                  <th width="40" style="padding:8px;">No</th>
+                  <th style="padding:8px;">Nama</th>
+                  <th width="120" style="padding:8px;">Jabatan</th>
+                  <th width="110" style="padding:8px;">Status</th>
+                  <th width="80" style="padding:8px;">Masuk</th>
+                  <th width="80" style="padding:8px;">Pulang</th>
+                  <th style="padding:8px;">Keterangan</th>
+                </tr>
+              </thead>
+              <tbody>`;
 
-    grouped[tgl].forEach((r, i) => {
-      const isTidakHadir = !r.jam_datang || r.jam_datang === '-' || (r.kehadiran && r.kehadiran.toLowerCase().includes('tidak hadir'));
-      const badgeClass = isTidakHadir ? 'bg-red' : 'bg-green';
-      const statusText = isTidakHadir ? 'Tidak Hadir' : (r.kehadiran || 'Hadir');
+        grouped[tgl].forEach((r, i) => {
+          const isTidakHadir = !r.jam_datang || r.jam_datang === '-' || (r.kehadiran && r.kehadiran.toLowerCase().includes('tidak hadir'));
+          const badgeClass = isTidakHadir ? 'bg-red' : 'bg-green';
+          const statusText = isTidakHadir ? 'Tidak Hadir' : (r.kehadiran || 'Hadir');
 
-      html += `
-        <tr style="${isTidakHadir ? 'background-color: #fff1f2;' : ''}">
-          <td style="text-align:center; padding:5px;">${i + 1}</td>
-          <td style="font-weight:600; padding:5px;">${r.nama}</td>
-          <td style="text-align:center; padding:5px;">${r.jabatan}</td>
-          <td style="text-align:center; padding:5px;"><span class="badge ${badgeClass}">${statusText}</span></td>
-          <td style="text-align:center; padding:5px;">${r.jam_datang || '-'}</td>
-          <td style="text-align:center; padding:5px;">${r.jam_pulang || '-'}</td>
-          <td style="font-size:8pt; padding:5px; ${isTidakHadir ? 'color:#b91c1c; font-weight:bold;' : ''}">
-            ${r.keterangan || (isTidakHadir ? 'Tidak melakukan absensi' : '-')}
-          </td>
-        </tr>`;
-    });
+          html += `
+            <tr style="${isTidakHadir ? 'background-color: #fff1f2;' : ''}">
+              <td style="text-align:center; padding:5px;">${i + 1}</td>
+              <td style="font-weight:600; padding:5px;">${r.nama}</td>
+              <td style="text-align:center; padding:5px;">${r.jabatan}</td>
+              <td style="text-align:center; padding:5px;"><span class="badge ${badgeClass}">${statusText}</span></td>
+              <td style="text-align:center; padding:5px;">${r.jam_datang || '-'}</td>
+              <td style="text-align:center; padding:5px;">${r.jam_pulang || '-'}</td>
+              <td style="font-size:8pt; padding:5px; ${isTidakHadir ? 'color:#b91c1c; font-weight:bold;' : ''}">
+                ${r.keterangan || (isTidakHadir ? 'Tidak melakukan absensi' : '-')}
+              </td>
+            </tr>`;
+        });
 
-    html += `</tbody></table></div>`;
-  });
+        html += `</tbody></table></div>`;
+      });
 
-  html += '</div>';
-  container.innerHTML = html;
-}
+      html += '</div>';
+      container.innerHTML = html;
+    }
 
     function exportExcel() {
-      TableToExcel.convert(document.querySelector("#rekapPrintArea table"), {
-        name: "Rekap_Absensi.xlsx",
-        sheet: { name: "Sheet 1" }
+      const data = window.dataRekapTerakhir;
+      if (!data || data.length === 0) return alert("Data tidak tersedia! Silakan filter dulu.");
+
+      const grouped = data.reduce((acc, curr) => {
+        if (!acc[curr.tanggal]) acc[curr.tanggal] = [];
+        acc[curr.tanggal].push(curr);
+        return acc;
+      }, {});
+
+      let q = '<' + '?';
+      let eq = '?' + '>';
+      
+      let xml = q + 'xml version="1.0" encoding="UTF-8"' + eq + 
+                q + 'mso-application progid="Excel.Sheet"' + eq +
+                '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" ' +
+                'xmlns:o="urn:schemas-microsoft-com:office:office" ' +
+                'xmlns:x="urn:schemas-microsoft-com:office:excel" ' +
+                'xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" ' +
+                'xmlns:html="http://www.w3.org/TR/REC-html40">';
+
+      Object.keys(grouped).forEach(tgl => {
+        let safeSheetName = tgl.replace(/[:\\/?*\[\]]/g, "-").substring(0, 31);
+
+        xml += `<Worksheet ss:Name="${safeSheetName}"><Table>`;
+        xml += '<Column ss:Width="30"/><Column ss:Width="200"/><Column ss:Width="100"/><Column ss:Width="80"/><Column ss:Width="80"/><Column ss:Width="150"/>';
+
+        xml += '<Row ss:StyleID="headerStyle">';
+        ['No', 'Nama GTK', 'Jabatan', 'Status', 'Masuk', 'Pulang', 'Keterangan'].forEach(h => {
+          xml += `<Cell><Data ss:Type="String">${h}</Data></Cell>`;
+        });
+        xml += '</Row>';
+
+        grouped[tgl].forEach((r, i) => {
+          xml += '<Row>';
+          xml += `<Cell><Data ss:Type="Number">${i + 1}</Data></Cell>`;
+          xml += `<Cell><Data ss:Type="String">${r.nama}</Data></Cell>`;
+          xml += `<Cell><Data ss:Type="String">${r.jabatan}</Data></Cell>`;
+          xml += `<Cell><Data ss:Type="String">${r.kehadiran}</Data></Cell>`;
+          xml += `<Cell><Data ss:Type="String">${r.jam_datang || '-'}</Data></Cell>`;
+          xml += `<Cell><Data ss:Type="String">${r.jam_pulang || '-'}</Data></Cell>`;
+          xml += `<Cell><Data ss:Type="String">${r.keterangan || '-'}</Data></Cell>`;
+          xml += '</Row>';
+        });
+
+        xml += '</Table></Worksheet>';
       });
+
+      xml += '</Workbook>';
+
+      const blob = new Blob([xml], { type: "application/vnd.ms-excel" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `REKAP_ABSENSI_SMKN1_${new Date().getTime()}.xls`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
     }
 
     function exportPDF() { window.print(); }
 
-   /* --- SETTINGS --- */
-function loadSettings() {
-  google.script.run
-    .withSuccessHandler(function(s) {
-      if (!s) return;
+    /* --- SETTINGS --- */
+    function loadSettings() {
+      google.script.run
+        .withSuccessHandler(function(s) {
+          if (!s) return;
 
-      // Fill Input Standard
-      const setVal = (id, val) => {
+          const setVal = (id, val) => {
+            const el = document.getElementById(id);
+            if (el) el.value = val || "";
+          };
+
+          setVal('setAbMulai', s.jamAbsenMulai);
+          setVal('setAbSelesai', s.jamAbsenSelesai);
+          setVal('setJamMasukGuru', s.jamTerlambatGuru);
+          setVal('setJamMasukTendik', s.jamTerlambatTendik);
+          setVal('setJamPulang', s.jamPulangMinimal);
+          setVal('setRadius', s.radiusMeter || 0);
+          setVal('setAdminUser', s.admin_user);
+
+          if (s.hariKerja) {
+            const hariAktif = s.hariKerja.toString().split(',');
+            const checkboxes = document.querySelectorAll('input[name="hariKerja"]');
+            checkboxes.forEach(cb => {
+              cb.checked = hariAktif.includes(cb.value);
+            });
+          }
+        })
+        .withFailureHandler(function(err) {
+          console.error("Gagal memuat pengaturan:", err);
+        })
+        .getSystemSettings();
+    }
+
+    function simpanSettings() {
+      const btn = document.querySelector('.btn-full') || document.querySelector('#view-settings .btn-primary');
+      const originalText = btn ? btn.innerText : "💾 Perbarui Pengaturan";
+
+      if (btn) {
+        btn.innerText = "⏳ Menyimpan...";
+        btn.disabled = true;
+      }
+
+      const getValue = (id) => {
         const el = document.getElementById(id);
-        if (el) el.value = val || "";
+        return el ? el.value : "";
       };
 
-      setVal('setAbMulai', s.jamAbsenMulai);
-      setVal('setAbSelesai', s.jamAbsenSelesai);
-      setVal('setJamMasukGuru', s.jamTerlambatGuru);
-      setVal('setJamMasukTendik', s.jamTerlambatTendik);
-      setVal('setJamPulang', s.jamPulangMinimal);
-      setVal('setRadius', s.radiusMeter || 0);
-      setVal('setAdminUser', s.admin_user);
+      const hariChecked = Array.from(document.querySelectorAll('input[name="hariKerja"]:checked'))
+                               .map(cb => cb.value)
+                               .join(',');
 
-      // Centang Checkbox Hari Kerja
-      if (s.hariKerja) {
-        const hariAktif = s.hariKerja.toString().split(',');
-        const checkboxes = document.querySelectorAll('input[name="hariKerja"]');
-        checkboxes.forEach(cb => {
-          cb.checked = hariAktif.includes(cb.value);
+      const data = {
+        jamAbsenMulai: getValue('setAbMulai'),
+        jamAbsenSelesai: getValue('setAbSelesai'),
+        jamTerlambatGuru: getValue('setJamMasukGuru'),
+        jamTerlambatTendik: getValue('setJamMasukTendik'),
+        jamPulangMinimal: getValue('setJamPulang'),
+        radiusMeter: getValue('setRadius'),
+        admin_user: getValue('setAdminUser'),
+        admin_pass: getValue('setAdminPass'),
+        hariKerja: hariChecked
+      };
+
+      google.script.run
+        .withSuccessHandler(function(msg) {
+          alert(msg || "Pengaturan berhasil diperbarui!");
+          if (btn) {
+            btn.innerText = originalText;
+            btn.disabled = false;
+          }
+          const passEl = document.getElementById('setAdminPass');
+          if (passEl) passEl.value = "";
+        })
+        .withFailureHandler(function(err) {
+          alert("Gagal menyimpan: " + err.message);
+          if (btn) {
+            btn.innerText = originalText;
+            btn.disabled = false;
+          }
+        })
+        .saveSystemSettings(data);
+    }
+
+    async function jalankanProsesArsip() {
+      const bln = document.getElementById('arsipBulan').value;
+      const thn = document.getElementById('arsipTahun').value;
+      const sel = document.getElementById('arsipBulan');
+      const namaBulan = sel.options[sel.selectedIndex].text;
+
+      const konfirmasi = confirm(
+        "⚠️ PERINGATAN KERAS!\n\n" +
+        "Data absensi bulan " + namaBulan + " " + thn + " akan DIPINDAHKAN ke file baru di Google Drive.\n" +
+        "Data di tabel utama akan DIHAPUS agar sistem tetap ringan.\n\n" +
+        "Apakah Anda yakin?"
+      );
+
+      if (!konfirmasi) return;
+
+      const btn = document.getElementById('btnProsesArsip');
+      const originalText = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = "⏳ Sedang Memproses...";
+
+      try {
+        const response = await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "arsipDataAbsensi",
+            bulan: bln,
+            tahun: thn
+          })
         });
-      }
-    })
-    .withFailureHandler(function(err) {
-      console.error("Gagal memuat pengaturan:", err);
-    })
-    .getSystemSettings();
-}
 
-function simpanSettings() {
-  const btn = document.querySelector('.btn-full') || document.querySelector('#view-settings .btn-primary');
-  const originalText = btn ? btn.innerText : "💾 Perbarui Pengaturan";
+        const res = await response.json();
 
-  if (btn) {
-    btn.innerText = "⏳ Menyimpan...";
-    btn.disabled = true;
-  }
+        if (res.success) {
+            alert("✅ " + res.message);
+        } else {
+            alert("❌ " + res.message);
+        }
 
-  // Helper aman ambil value elemen
-  const getValue = (id) => {
-    const el = document.getElementById(id);
-    return el ? el.value : "";
-  };
+        if (typeof loadRekap === "function") loadRekap('custom');
+        if (typeof loadDashboard === "function") loadDashboard();
 
-  // Ambil checklist hari kerja
-  const hariChecked = Array.from(document.querySelectorAll('input[name="hariKerja"]:checked'))
-                           .map(cb => cb.value)
-                           .join(',');
-
-  const data = {
-    jamAbsenMulai: getValue('setAbMulai'),
-    jamAbsenSelesai: getValue('setAbSelesai'),
-    jamTerlambatGuru: getValue('setJamMasukGuru'),
-    jamTerlambatTendik: getValue('setJamMasukTendik'),
-    jamPulangMinimal: getValue('setJamPulang'),
-    radiusMeter: getValue('setRadius'),
-    admin_user: getValue('setAdminUser'),
-    admin_pass: getValue('setAdminPass'), // Pastikan di HTML ID elemennya adalah "setAdminPass"
-    hariKerja: hariChecked
-  };
-
-  google.script.run
-    .withSuccessHandler(function(msg) {
-      alert(msg || "Pengaturan berhasil diperbarui!");
-      if (btn) {
-        btn.innerText = originalText;
+      } catch (err) {
+        alert("Terjadi kesalahan koneksi: " + err);
+      } finally {
         btn.disabled = false;
+        btn.innerHTML = originalText;
       }
-      // Kosongkan field password setelah berhasil disimpan demi keamanan
-      const passEl = document.getElementById('setAdminPass');
-      if (passEl) passEl.value = "";
-    })
-    .withFailureHandler(function(err) {
-      alert("Gagal menyimpan: " + err.message);
-      if (btn) {
-        btn.innerText = originalText;
-        btn.disabled = false;
-      }
-    })
-    .saveSystemSettings(data);
-}
+    }
 
     /* --- UTILS --- */
     function bukaModal(url, nama) {
@@ -698,187 +816,6 @@ function simpanSettings() {
         loadDashboard();
       }
     };
-    function renderTabelRekap(data) {
-  const container = document.getElementById('container-rekap-hasil');
-  if (!data || data.length === 0) {
-    container.innerHTML = '<div style="text-align:center; padding:20px;">📭 Tidak ada data ditemukan.</div>';
-    return;
-  }
-
-  // Mengelompokkan data berdasarkan tanggal
-  const grouped = data.reduce((acc, curr) => {
-    if (!acc[curr.tanggal]) acc[curr.tanggal] = [];
-    acc[curr.tanggal].push(curr);
-    return acc;
-  }, {});
-
-  // Urutkan tanggal (terbaru di atas)
-  const sortedDates = Object.keys(grouped).sort((a, b) => {
-    const d1 = a.split('/').reverse().join('-');
-    const d2 = b.split('/').reverse().join('-');
-    return d2.localeCompare(d1);
-  });
-
-  let html = '<div id="rekapPrintArea">';
-
-  sortedDates.forEach(tgl => {
-    html += `
-      <div class="group-tanggal" style="margin-bottom: 50px; page-break-after: always; color: black;">
-        <div class="kop-surat" style="text-align: center; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 15px;">
-          <img src="https://smkn1ktg.sch.id/logo/logo.gif" style="width: 50px; height: auto; margin-bottom: 5px;">
-          <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase;">Rekap E-Absensi GTK</div>
-          <div style="font-size: 12pt; font-weight: bold; text-transform: uppercase;">SMK Negeri 1 Kotamobagu</div>
-          <div style="font-size: 9pt; font-weight: normal;">Tanggal Laporan: ${tgl}</div>
-        </div>
-
-        <table border="1" style="width:100%; border-collapse:collapse; font-size: 10pt;">
-          <thead>
-            <tr style="background: #f1f5f9;">
-              <th width="40" style="padding:8px;">No</th>
-              <th style="padding:8px;">Nama</th>
-              <th width="120" style="padding:8px;">Jabatan</th>
-              <th width="100" style="padding:8px;">Status</th>
-              <th width="80" style="padding:8px;">Masuk</th>
-              <th width="80" style="padding:8px;">Pulang</th>
-              <th style="padding:8px;">Keterangan</th>
-            </tr>
-          </thead>
-          <tbody>`;
-
-    grouped[tgl].forEach((r, i) => {
-      const badgeClass = r.kehadiran === 'Hadir' ? 'bg-green' : 'bg-red';
-      html += `
-        <tr>
-          <td style="text-align:center; padding:5px;">${i + 1}</td>
-          <td style="font-weight:600; padding:5px;">${r.nama}</td>
-          <td style="text-align:center; padding:5px;">${r.jabatan}</td>
-          <td style="text-align:center; padding:5px;">${r.kehadiran}</td>
-          <td style="text-align:center; padding:5px;">${r.jam_datang || '-'}</td>
-          <td style="text-align:center; padding:5px;">${r.jam_pulang || '-'}</td>
-          <td style="font-size:8pt; padding:5px;">${r.keterangan || '-'}</td>
-        </tr>`;
-    });
-
-    html += `</tbody></table></div>`;
-  });
-
-  html += '</div>';
-  container.innerHTML = html;
-}
-    function exportExcel() {
-  const data = window.dataRekapTerakhir;
-  if (!data || data.length === 0) return alert("Data tidak tersedia! Silakan filter dulu.");
-
-  const grouped = data.reduce((acc, curr) => {
-    if (!acc[curr.tanggal]) acc[curr.tanggal] = [];
-    acc[curr.tanggal].push(curr);
-    return acc;
-  }, {});
-
-  let q = '<' + '?';
-  let eq = '?' + '>';
-  
-  let xml = q + 'xml version="1.0" encoding="UTF-8"' + eq + 
-            q + 'mso-application progid="Excel.Sheet"' + eq +
-            '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" ' +
-            'xmlns:o="urn:schemas-microsoft-com:office:office" ' +
-            'xmlns:x="urn:schemas-microsoft-com:office:excel" ' +
-            'xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" ' +
-            'xmlns:html="http://www.w3.org/TR/REC-html40">';
-
-  Object.keys(grouped).forEach(tgl => {
-    let safeSheetName = tgl.replace(/[:\\/?*\[\]]/g, "-").substring(0, 31);
-
-    xml += `<Worksheet ss:Name="${safeSheetName}"><Table>`;
-    xml += '<Column ss:Width="30"/><Column ss:Width="200"/><Column ss:Width="100"/><Column ss:Width="80"/><Column ss:Width="80"/><Column ss:Width="150"/>';
-
-    // Header Row
-    xml += '<Row ss:StyleID="headerStyle">';
-    ['No', 'Nama GTK', 'Jabatan', 'Status', 'Masuk', 'Pulang', 'Keterangan'].forEach(h => {
-      xml += `<Cell><Data ss:Type="String">${h}</Data></Cell>`;
-    });
-    xml += '</Row>';
-
-    // Data Rows
-    grouped[tgl].forEach((r, i) => {
-      xml += '<Row>';
-      xml += `<Cell><Data ss:Type="Number">${i + 1}</Data></Cell>`;
-      xml += `<Cell><Data ss:Type="String">${r.nama}</Data></Cell>`;
-      xml += `<Cell><Data ss:Type="String">${r.jabatan}</Data></Cell>`;
-      xml += `<Cell><Data ss:Type="String">${r.kehadiran}</Data></Cell>`;
-      xml += `<Cell><Data ss:Type="String">${r.jam_datang || '-'}</Data></Cell>`;
-      xml += `<Cell><Data ss:Type="String">${r.jam_pulang || '-'}</Data></Cell>`;
-      xml += `<Cell><Data ss:Type="String">${r.keterangan || '-'}</Data></Cell>`;
-      xml += '</Row>';
-    });
-
-    xml += '</Table></Worksheet>';
-  });
-
-  xml += '</Workbook>';
-
-  const blob = new Blob([xml], { type: "application/vnd.ms-excel" });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `REKAP_ABSENSI_SMKN1_${new Date().getTime()}.xls`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-}
-    async function jalankanProsesArsip() {
-  const bln = document.getElementById('arsipBulan').value;
-  const thn = document.getElementById('arsipTahun').value;
-  const sel = document.getElementById('arsipBulan');
-  const namaBulan = sel.options[sel.selectedIndex].text;
-
-  // Validasi Konfirmasi
-  const konfirmasi = confirm(
-    "⚠️ PERINGATAN KERAS!\n\n" +
-    "Data absensi bulan " + namaBulan + " " + thn + " akan DIPINDAHKAN ke file baru di Google Drive.\n" +
-    "Data di tabel utama akan DIHAPUS agar sistem tetap ringan.\n\n" +
-    "Apakah Anda yakin?"
-  );
-
-  if (!konfirmasi) return;
-
-  // Loading State
-  const btn = document.getElementById('btnProsesArsip'); // Pastikan ID tombol sesuai
-  const originalText = btn.innerHTML;
-  btn.disabled = true;
-  btn.innerHTML = "⏳ Sedang Memproses...";
-
-  try {
-    // Menggunakan fetch/apiCall untuk mengirim data ke Google Apps Script
-    const response = await fetch(SCRIPT_URL, {
-      method: "POST",
-      body: JSON.stringify({
-        action: "arsipDataAbsensi",
-        bulan: bln,
-        tahun: thn
-      })
-    });
-
-    const res = await response.json(); // Pastikan GAS mengembalikan JSON
-
-    if (res.success) {
-        alert("✅ " + res.message);
-    } else {
-        alert("❌ " + res.message);
-    }
-
-    // Refresh UI
-    if (typeof loadRekap === "function") loadRekap('custom');
-    if (typeof loadDashboard === "function") loadDashboard();
-
-  } catch (err) {
-    alert("Terjadi kesalahan koneksi: " + err);
-  } finally {
-    btn.disabled = false;
-    btn.innerHTML = originalText;
-  }
-}
-
   </script>
 </body>
 </html>
