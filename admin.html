@@ -181,6 +181,8 @@
             <button class="btn btn-primary" onclick="loadRekap('custom')" style="flex:2">🔍 Tampilkan Data</button>
             <button class="btn" onclick="exportExcel()" style="background:var(--success); color:white; flex:1">📗 Excel</button>
             <button class="btn" onclick="exportPDF()" style="background:var(--danger); color:white; flex:1">📄 PDF</button>
+            <button onclick="cetakRingkasanKehadiran()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded shadow inline-flex items-center gap-2">
+            🖨️ Cetak Rekap Ringkas</button>
           </div>
         </div>
 
@@ -964,6 +966,125 @@
         loadDashboard();
       }
     };
+
+    function cetakRingkasanKehadiran() {
+  const data = window.dataRekapTerakhir;
+  if (!data || data.length === 0) {
+    return alert("Data belum dimuat! Silakan klik tombol '🔍 Tampilkan Data' terlebih dahulu.");
+  }
+
+  // 1. Hitung akumulasi Hadir & Tidak Hadir per GTK
+  const rekapHarian = {};
+
+  data.forEach(r => {
+    const nama = r.nama || 'Tanpa Nama';
+    const jabatan = r.jabatan || '-';
+
+    if (!rekapHarian[nama]) {
+      rekapHarian[nama] = {
+        nama: nama,
+        jabatan: jabatan,
+        hadir: 0,
+        tidakHadir: 0,
+        total: 0
+      };
+    }
+
+    // Penentuan status kehadiran
+    const isTidakHadir = !r.jam_datang || r.jam_datang === '-' || (r.kehadiran && r.kehadiran.toLowerCase().includes('tidak hadir'));
+
+    if (isTidakHadir) {
+      rekapHarian[nama].tidakHadir += 1;
+    } else {
+      rekapHarian[nama].hadir += 1;
+    }
+    rekapHarian[nama].total += 1;
+  });
+
+  const daftarGtk = Object.values(rekapHarian);
+
+  // 2. Buat Tampilan Cetak (Printable Window)
+  const printWindow = window.open('', '_blank');
+  
+  let html = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <title>Cetak Rekap Ringkas Kehadiran</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
+        .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .header h2 { margin: 0; font-size: 18pt; text-transform: uppercase; }
+        .header p { margin: 5px 0 0 0; font-size: 11pt; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #444; padding: 8px 10px; font-size: 10pt; }
+        th { background-color: #f2f2f2; text-align: center; font-weight: bold; }
+        td.center { text-align: center; }
+        .footer { margin-top: 30px; float: right; text-align: center; width: 200px; font-size: 10pt; }
+        @media print {
+          @page { size: A4 portrait; margin: 15mm; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <h2>REKAPITULASI KEHADIRAN GTK</h2>
+        <p>E-Absensi SMK Negeri 1 Kotamobagu</p>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th width="5%">No</th>
+            <th>Nama GTK</th>
+            <th>Jabatan</th>
+            <th width="15%">Jumlah Hadir</th>
+            <th width="15%">Tidak Hadir</th>
+            <th width="15%">Total Hari</th>
+          </tr>
+        </thead>
+        <tbody>
+  `;
+
+  daftarGtk.forEach((item, index) => {
+    html += `
+      <tr>
+        <td class="center">${index + 1}</td>
+        <td>${item.nama}</td>
+        <td>${item.jabatan}</td>
+        <td class="center" style="color: green; font-weight: bold;">${item.hadir}</td>
+        <td class="center" style="color: red; font-weight: bold;">${item.tidakHadir}</td>
+        <td class="center">${item.total}</td>
+      </tr>
+    `;
+  });
+
+  const tglCetak = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+  html += `
+        </tbody>
+      </table>
+
+      <div class="footer">
+        <p>Kotamobagu, ${tglCetak}</p>
+        <p>Kepala Sekolah / Admin</p>
+        <br><br><br>
+        <p><b>_______________________</b></p>
+      </div>
+
+      <script>
+        window.onload = function() {
+          window.print();
+          window.onafterprint = function() { window.close(); };
+        };
+      <\/script>
+    </body>
+    </html>
+  `;
+
+  printWindow.document.write(html);
+  printWindow.document.close();
+}
   </script>
 </body>
 </html>
