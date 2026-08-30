@@ -554,77 +554,76 @@
       let html = '<div id="rekapPrintArea">';
 
       // CETAK PER NAMA GTK INDIVIDU
-     // CETAK PER NAMA GTK INDIVIDU
-if (selectedGtk) {
-  const gtkInfo = filteredData[0];
-  
-  let totalHadir = 0;
-  let totalTerlambat = 0;
-  let totalTidakHadir = 0;
+      if (selectedGtk) {
+        const gtkInfo = filteredData[0];
+        
+        let totalHadir = 0;
+        let totalTerlambat = 0;
+        let totalTidakHadir = 0;
 
-  filteredData.forEach(r => {
-    const isTidakHadir = !r.jam_datang || r.jam_datang === '-' || (r.kehadiran && r.kehadiran.toLowerCase().includes('tidak hadir'));
-    if (isTidakHadir) {
-      totalTidakHadir++;
-    } else if (r.kehadiran && r.kehadiran.toLowerCase().includes('terlambat')) {
-      totalTerlambat++;
-    } else {
-      totalHadir++;
-    }
-  });
+        filteredData.forEach(r => {
+          const isTidakHadir = !r.jam_datang || r.jam_datang === '-' || (r.kehadiran && r.kehadiran.toLowerCase().includes('tidak hadir'));
+          if (isTidakHadir) {
+            totalTidakHadir++;
+          } else if (r.kehadiran && r.kehadiran.toLowerCase().includes('terlambat')) {
+            totalTerlambat++;
+          } else {
+            totalHadir++;
+          }
+        });
 
-  html += `
-    <div class="group-gtk" style="color: black; margin-bottom: 30px;">
-      <div class="kop-surat" style="text-align: center; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 15px;">
-        <img src="https://smkn1ktg.sch.id/logo/logo.gif" style="width: 50px; height: auto; margin-bottom: 5px;">
-        <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase;">Laporan Kehadiran Individu GTK</div>
-        <div style="font-size: 12pt; font-weight: bold; text-transform: uppercase;">SMK Negeri 1 Kotamobagu</div>
-      </div>
+        html += `
+          <div class="group-gtk" style="color: black; margin-bottom: 30px;">
+            <div class="kop-surat" style="text-align: center; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 15px;">
+              <img src="https://smkn1ktg.sch.id/logo/logo.gif" style="width: 50px; height: auto; margin-bottom: 5px;">
+              <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase;">Laporan Kehadiran Individu GTK</div>
+              <div style="font-size: 12pt; font-weight: bold; text-transform: uppercase;">SMK Negeri 1 Kotamobagu</div>
+            </div>
 
-      <table style="width:100%; margin-bottom:15px; font-size:10pt; border:none;">
-        <tr><td width="120"><b>Nama GTK</b></td><td width="10">:</td><td>${gtkInfo.nama}</td></tr>
-        <tr><td><b>Jabatan</b></td><td>:</td><td>${gtkInfo.jabatan}</td></tr>
-      </table>
+            <table style="width:100%; margin-bottom:15px; font-size:10pt; border:none;">
+              <tr><td width="120"><b>Nama GTK</b></td><td width="10">:</td><td>${gtkInfo.nama}</td></tr>
+              <tr><td><b>NIP / ID</b></td><td>:</td><td>${gtkInfo.nip || gtkInfo.id || '-'}</td></tr>
+              <tr><td><b>Jabatan</b></td><td>:</td><td>${gtkInfo.jabatan}</td></tr>
+            </table>
 
-      <div style="display:flex; gap:10px; margin-bottom:15px; font-size:9pt;">
-        <div style="padding:6px 12px; background:#dcfce7; border:1px solid #16a34a; border-radius:4px;">Hadir: <b>${totalHadir}</b></div>
-        <div style="padding:6px 12px; background:#fef3c7; border:1px solid #d97706; border-radius:4px;">Terlambat: <b>${totalTerlambat}</b></div>
-        <div style="padding:6px 12px; background:#fee2e2; border:1px solid #dc2626; border-radius:4px;">Tidak Hadir: <b>${totalTidakHadir}</b></div>
-      </div>
+            <div style="display:flex; gap:10px; margin-bottom:15px; font-size:9pt;">
+              <div style="padding:6px 12px; background:#dcfce7; border:1px solid #16a34a; border-radius:4px;">Hadir: <b>${totalHadir}</b></div>
+              <div style="padding:6px 12px; background:#fef3c7; border:1px solid #d97706; border-radius:4px;">Terlambat: <b>${totalTerlambat}</b></div>
+              <div style="padding:6px 12px; background:#fee2e2; border:1px solid #dc2626; border-radius:4px;">Tidak Hadir: <b>${totalTidakHadir}</b></div>
+            </div>
 
-      <table border="1" style="width:100%; border-collapse:collapse; font-size: 10pt;">
-        <thead>
-          <tr style="background: #f1f5f9;">
-            <th width="40" style="padding:8px;">No</th>
-            <th width="100" style="padding:8px;">Tanggal</th>
-            <th width="110" style="padding:8px;">Status</th>
-            <th width="80" style="padding:8px;">Masuk</th>
-            <th width="80" style="padding:8px;">Pulang</th>
-            <th style="padding:8px;">Keterangan</th>
-          </tr>
-        </thead>
-        <tbody>`;
+            <table border="1" style="width:100%; border-collapse:collapse; font-size: 10pt;">
+              <thead>
+                <tr style="background: #f1f5f9;">
+                  <th width="40" style="padding:8px;">No</th>
+                  <th width="100" style="padding:8px;">Tanggal</th>
+                  <th width="110" style="padding:8px;">Status</th>
+                  <th width="80" style="padding:8px;">Masuk</th>
+                  <th width="80" style="padding:8px;">Pulang</th>
+                  <th style="padding:8px;">Keterangan</th>
+                </tr>
+              </thead>
+              <tbody>`;
 
-  filteredData.forEach((r, i) => {
-    const isTidakHadir = !r.jam_datang || r.jam_datang === '-' || (r.kehadiran && r.kehadiran.toLowerCase().includes('tidak hadir'));
-    const badgeClass = isTidakHadir ? 'bg-red' : 'bg-green';
-    const statusText = isTidakHadir ? 'Tidak Hadir' : (r.kehadiran || 'Hadir');
+        filteredData.forEach((r, i) => {
+          const isTidakHadir = !r.jam_datang || r.jam_datang === '-' || (r.kehadiran && r.kehadiran.toLowerCase().includes('tidak hadir'));
+          const badgeClass = isTidakHadir ? 'bg-red' : 'bg-green';
+          const statusText = isTidakHadir ? 'Tidak Hadir' : (r.kehadiran || 'Hadir');
 
-    html += `
-      <tr style="${isTidakHadir ? 'background-color: #fff1f2;' : ''}">
-        <td style="text-align:center; padding:5px;">${i + 1}</td>
-        <td style="text-align:center; padding:5px;">${r.tanggal}</td>
-        <td style="text-align:center; padding:5px;"><span class="badge ${badgeClass}">${statusText}</span></td>
-        <td style="text-align:center; padding:5px;">${r.jam_datang || '-'}</td>
-        <td style="text-align:center; padding:5px;">${r.jam_pulang || '-'}</td>
-        <td style="font-size:8pt; padding:5px; ${isTidakHadir ? 'color:#b91c1c; font-weight:bold;' : ''}">
-          ${r.keterangan || (isTidakHadir ? 'Tidak melakukan absensi' : '-')}
-        </td>
-      </tr>`;
-  });
+          html += `
+            <tr style="${isTidakHadir ? 'background-color: #fff1f2;' : ''}">
+              <td style="text-align:center; padding:5px;">${i + 1}</td>
+              <td style="text-align:center; padding:5px;">${r.tanggal}</td>
+              <td style="text-align:center; padding:5px;"><span class="badge ${badgeClass}">${statusText}</span></td>
+              <td style="text-align:center; padding:5px;">${r.jam_datang || '-'}</td>
+              <td style="text-align:center; padding:5px;">${r.jam_pulang || '-'}</td>
+              <td style="font-size:8pt; padding:5px; ${isTidakHadir ? 'color:#b91c1c; font-weight:bold;' : ''}">
+                ${r.keterangan || (isTidakHadir ? 'Tidak melakukan absensi' : '-')}
+              </td>
+            </tr>`;
+        });
 
-  html += `</tbody></table></div>`;
-}
+        html += `</tbody></table></div>`;
 
       } else {
         // REKAP KOLEKTIF SEMUA GTK PER TANGGAL
