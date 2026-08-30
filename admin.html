@@ -690,68 +690,127 @@
     }
 
     function exportExcel() {
-      const data = window.dataRekapTerakhir;
-      if (!data || data.length === 0) return alert("Data tidak tersedia! Silakan filter dulu.");
+  const data = window.dataRekapTerakhir;
+  if (!data || data.length === 0) {
+    return alert("Data belum dimuat! Silakan klik tombol '🔍 Tampilkan Data' terlebih dahulu.");
+  }
 
-      const selectedGtk = document.getElementById('filterGtkSelect') ? document.getElementById('filterGtkSelect').value : '';
-      let filteredData = selectedGtk ? data.filter(d => d.nama === selectedGtk) : data;
+  const selectedGtk = document.getElementById('filterGtkSelect') ? document.getElementById('filterGtkSelect').value : '';
+  let filteredData = selectedGtk ? data.filter(d => d.nama === selectedGtk) : data;
 
-      const grouped = filteredData.reduce((acc, curr) => {
-        if (!acc[curr.tanggal]) acc[curr.tanggal] = [];
-        acc[curr.tanggal].push(curr);
-        return acc;
-      }, {});
+  if (filteredData.length === 0) {
+    return alert("Tidak ada data yang cocok untuk diekspor!");
+  }
 
-      let q = '<' + '?';
-      let eq = '?' + '>';
+  // Helper untuk membersihkan teks dari karakter perusak XML
+  const clean = (txt) => {
+    if (txt === null || txt === undefined) return '-';
+    return String(txt)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&apos;');
+  };
+
+  // 1. OPSI INDIVIDU (Jika GTK dipilih)
+  if (selectedGtk) {
+    let csvContent = "\uFEFF"; // UTF-8 BOM agar terbaca rapi di Excel
+    csvContent += "No;Tanggal;Nama GTK;Jabatan;Status;Jam Masuk;Jam Pulang;Keterangan\n";
+
+    filteredData.forEach((r, i) => {
+      const isTidakHadir = !r.jam_datang || r.jam_datang === '-' || (r.kehadiran && r.kehadiran.toLowerCase().includes('tidak hadir'));
+      const statusText = isTidakHadir ? 'Tidak Hadir' : (r.kehadiran || 'Hadir');
       
-      let xml = q + 'xml version="1.0" encoding="UTF-8"' + eq + 
-                q + 'mso-application progid="Excel.Sheet"' + eq +
-                '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" ' +
-                'xmlns:o="urn:schemas-microsoft-com:office:office" ' +
-                'xmlns:x="urn:schemas-microsoft-com:office:excel" ' +
-                'xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" ' +
-                'xmlns:html="http://www.w3.org/TR/REC-html40">';
+      const row = [
+        i + 1,
+        `"${clean(r.tanggal)}"`,
+        `"${clean(r.nama)}"`,
+        `"${clean(r.jabatan)}"`,
+        `"${clean(statusText)}"`,
+        `"${clean(r.jam_datang)}"`,
+        `"${clean(r.jam_pulang)}"`,
+        `"${clean(r.keterangan)}"`
+      ];
+      csvContent += row.join(";") + "\n";
+    });
 
-      Object.keys(grouped).forEach(tgl => {
-        let safeSheetName = tgl.replace(/[:\\/?*\[\]]/g, "-").substring(0, 31);
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `REKAP_INDIVIDU_${selectedGtk.replace(/\s+/g, '_')}_${new Date().getTime()}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    return;
+  }
 
-        xml += `<Worksheet ss:Name="${safeSheetName}"><Table>`;
-        xml += '<Column ss:Width="30"/><Column ss:Width="200"/><Column ss:Width="100"/><Column ss:Width="80"/><Column ss:Width="80"/><Column ss:Width="150"/>';
+  // 2. OPSI KOLEKTIF (Semua GTK) - Spreadsheet XML Format
+  const grouped = filteredData.reduce((acc, curr) => {
+    if (!acc[curr.tanggal]) acc[curr.tanggal] = [];
+    acc[curr.tanggal].push(curr);
+    return acc;
+  }, {});
 
-        xml += '<Row ss:StyleID="headerStyle">';
-        ['No', 'Nama GTK', 'Jabatan', 'Status', 'Masuk', 'Pulang', 'Keterangan'].forEach(h => {
-          xml += `<Cell><Data ss:Type="String">${h}</Data></Cell>`;
-        });
-        xml += '</Row>';
+  let xml = '<?xml version="1.0" encoding="UTF-8"?>\n' +
+            '<?mso-application progid="Excel.Sheet"?>\n' +
+            '<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"\n' +
+            ' xmlns:o="urn:schemas-microsoft-com:office:office"\n' +
+            ' xmlns:x="urn:schemas-microsoft-com:office:excel"\n' +
+            ' xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"\n' +
+            ' xmlns:html="http://www.w3.org/TR/REC-html40">\n' +
+            ' <Styles>\n' +
+            '  <Style ss:ID="headerStyle">\n' +
+            '   <Font ss:Bold="1" ss:Color="#FFFFFF"/>\n' +
+            '   <Interior ss:Color="#1E40AF" ss:Pattern="Solid"/>\n' +
+            '   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>\n' +
+            '  </Style>\n' +
+            ' </Styles>\n';
 
-        grouped[tgl].forEach((r, i) => {
-          xml += '<Row>';
-          xml += `<Cell><Data ss:Type="Number">${i + 1}</Data></Cell>`;
-          xml += `<Cell><Data ss:Type="String">${r.nama}</Data></Cell>`;
-          xml += `<Cell><Data ss:Type="String">${r.jabatan}</Data></Cell>`;
-          xml += `<Cell><Data ss:Type="String">${r.kehadiran}</Data></Cell>`;
-          xml += `<Cell><Data ss:Type="String">${r.jam_datang || '-'}</Data></Cell>`;
-          xml += `<Cell><Data ss:Type="String">${r.jam_pulang || '-'}</Data></Cell>`;
-          xml += `<Cell><Data ss:Type="String">${r.keterangan || '-'}</Data></Cell>`;
-          xml += '</Row>';
-        });
+  Object.keys(grouped).forEach(tgl => {
+    let safeSheetName = clean(tgl.replace(/[:\\/?*\[\]]/g, "-")).substring(0, 31);
 
-        xml += '</Table></Worksheet>';
-      });
+    xml += `<Worksheet ss:Name="${safeSheetName}"><Table>`;
+    xml += '<Column ss:Width="40"/><Column ss:Width="180"/><Column ss:Width="100"/><Column ss:Width="110"/><Column ss:Width="80"/><Column ss:Width="80"/><Column ss:Width="200"/>';
 
-      xml += '</Workbook>';
+    xml += '<Row ss:StyleID="headerStyle">';
+    ['No', 'Nama GTK', 'Jabatan', 'Status', 'Masuk', 'Pulang', 'Keterangan'].forEach(h => {
+      xml += `<Cell><Data ss:Type="String">${h}</Data></Cell>`;
+    });
+    xml += '</Row>';
 
-      const blob = new Blob([xml], { type: "application/vnd.ms-excel" });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `REKAP_ABSENSI_SMKN1_${new Date().getTime()}.xls`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
+    grouped[tgl].forEach((r, i) => {
+      const isTidakHadir = !r.jam_datang || r.jam_datang === '-' || (r.kehadiran && r.kehadiran.toLowerCase().includes('tidak hadir'));
+      const statusText = isTidakHadir ? 'Tidak Hadir' : (r.kehadiran || 'Hadir');
 
+      xml += '<Row>';
+      xml += `<Cell><Data ss:Type="Number">${i + 1}</Data></Cell>`;
+      xml += `<Cell><Data ss:Type="String">${clean(r.nama)}</Data></Cell>`;
+      xml += `<Cell><Data ss:Type="String">${clean(r.jabatan)}</Data></Cell>`;
+      xml += `<Cell><Data ss:Type="String">${clean(statusText)}</Data></Cell>`;
+      xml += `<Cell><Data ss:Type="String">${clean(r.jam_datang)}</Data></Cell>`;
+      xml += `<Cell><Data ss:Type="String">${clean(r.jam_pulang)}</Data></Cell>`;
+      xml += `<Cell><Data ss:Type="String">${clean(r.keterangan)}</Data></Cell>`;
+      xml += '</Row>';
+    });
+
+    xml += '</Table></Worksheet>';
+  });
+
+  xml += '</Workbook>';
+
+  const blob = new Blob([xml], { type: "application/vnd.ms-excel;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `REKAP_ABSENSI_SMKN1_${new Date().getTime()}.xls`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
     function exportPDF() { window.print(); }
 
     /* --- SETTINGS --- */
