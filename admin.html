@@ -7,7 +7,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/gh/linways/table-to-excel@v1.0.4/dist/tableToExcel.js"></script>
   <style>
-    /* --- CSS ORIGINAL ANDA (DIKONSOLIDASI) --- */
     :root { 
       --primary: #2563eb; 
       --primary-dark: #1e40af; 
@@ -149,114 +148,115 @@
       </div>
     </div>
 
-   <div id="view-rekap" style="display:none; padding: 20px;">
-  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
-    <h1 style="margin:0; font-size: 1.5rem; color: var(--text-dark);">📊 Rekapitulasi Absensi</h1>
-  </div>
+    <div id="view-rekap" style="display:none; padding: 20px;">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+        <h1 style="margin:0; font-size: 1.5rem; color: var(--text-dark);">📊 Rekapitulasi Absensi</h1>
+      </div>
 
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px;">
-    
-    <div class="card-box" style="border-top: 4px solid var(--primary);">
-      <h3 style="color: var(--text-dark); margin-bottom: 15px;">🔍 Filter & Ekspor</h3>
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
-        <div style="flex:1; min-width: 140px;">
-          <label style="font-size: 0.7rem; font-weight: bold; display:block; margin-bottom:5px;">DARI TANGGAL</label>
-          <input type="date" id="filterTglMulai" class="btn" style="border:1px solid #ddd; width:100%; padding:8px;">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; margin-bottom: 20px;">
+        
+        <div class="card-box" style="border-top: 4px solid var(--primary);">
+          <h3 style="color: var(--text-dark); margin-bottom: 15px;">🔍 Filter & Ekspor</h3>
+          <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <div style="flex:1; min-width: 140px;">
+              <label style="font-size: 0.7rem; font-weight: bold; display:block; margin-bottom:5px;">DARI TANGGAL</label>
+              <input type="date" id="filterTglMulai" class="btn" style="border:1px solid #ddd; width:100%; padding:8px;">
+            </div>
+            <div style="flex:1; min-width: 140px;">
+              <label style="font-size: 0.7rem; font-weight: bold; display:block; margin-bottom:5px;">SAMPAI TANGGAL</label>
+              <input type="date" id="filterTglSelesai" class="btn" style="border:1px solid #ddd; width:100%; padding:8px;">
+            </div>
+          </div>
+          
+          <div style="margin-top: 10px;">
+            <label style="font-size: 0.7rem; font-weight: bold; display:block; margin-bottom:5px;">FILTER NAMA GTK</label>
+            <select id="filterNama" class="btn" style="border:1px solid #ddd; width:100%; padding:8px;">
+              <option value="">-- Semua GTK --</option>
+            </select>
+          </div>
+          
+          <div style="display:flex; gap:8px; margin-top:15px; flex-wrap:wrap;">
+            <button class="btn btn-primary" onclick="loadRekap('custom')" style="flex:2">🔍 Tampilkan Data</button>
+            <button class="btn" onclick="exportExcel()" style="background:var(--success); color:white; flex:1">📗 Excel</button>
+            <button class="btn" onclick="exportPDF()" style="background:var(--danger); color:white; flex:1">📄 PDF</button>
+          </div>
         </div>
-        <div style="flex:1; min-width: 140px;">
-          <label style="font-size: 0.7rem; font-weight: bold; display:block; margin-bottom:5px;">SAMPAI TANGGAL</label>
-          <input type="date" id="filterTglSelesai" class="btn" style="border:1px solid #ddd; width:100%; padding:8px;">
+
+        <div class="card-box" style="border-top: 4px solid var(--warning);">
+          <h3 style="color: var(--text-dark); margin-bottom: 10px;">📦 Arsip & Bersihkan</h3>
+          <p style="font-size: 0.75rem; color: var(--text-gray); margin-bottom: 12px; line-height: 1.4;">
+            Pindahkan data lama ke file baru agar database tetap ringan dan cepat.
+          </p>
+          
+          <div style="display: flex; gap: 8px; align-items: flex-end; background: #fffbeb; padding: 12px; border-radius: 8px; border: 1px solid #fef3c7;">
+            <div style="flex:2">
+              <label style="font-size: 0.65rem; font-weight: 800; color: #92400e; text-transform: uppercase;">Bulan</label>
+              <select id="arsipBulan" style="width: 100%; padding: 7px; border-radius: 5px; border: 1px solid #d1d5db;">
+                <option value="01">Januari</option>
+                <option value="02">Februari</option>
+                <option value="03">Maret</option>
+                <option value="04">April</option>
+                <option value="05">Mei</option>
+                <option value="06">Juni</option>
+                <option value="07">Juli</option>
+                <option value="08">Agustus</option>
+                <option value="09">September</option>
+                <option value="10">Oktober</option>
+                <option value="11">November</option>
+                <option value="12">Desember</option>
+              </select>
+            </div>
+            <div style="flex:1">
+              <label style="font-size: 0.65rem; font-weight: 800; color: #92400e; text-transform: uppercase;">Tahun</label>
+              <input type="number" id="arsipTahun" value="2026" style="width: 100%; padding: 7px; border-radius: 5px; border: 1px solid #d1d5db;">
+            </div>
+            <button class="btn" id="btnProsesArsip" onclick="jalankanProsesArsip()" style="background: var(--warning); color: white; padding: 8px 12px; height: 38px;" title="Pindahkan Data">
+              🚀
+            </button>
+          </div>
         </div>
       </div>
-      
-      <!-- FITUR BARU: FILTER NAMA GTK -->
-      <div style="margin-top: 10px;">
-        <label style="font-size: 0.7rem; font-weight: bold; display:block; margin-bottom:5px;">FILTER NAMA GTK</label>
-        <select id="filterNama" class="btn" style="border:1px solid #ddd; width:100%; padding:8px;">
-          <option value="">-- Semua GTK --</option>
-        </select>
-      </div>
-      
-      <div style="display:flex; gap:8px; margin-top:15px; flex-wrap:wrap;">
-        <button class="btn btn-primary" onclick="loadRekap('custom')" style="flex:2">🔍 Tampilkan Data</button>
-        <button class="btn" onclick="exportExcel()" style="background:var(--success); color:white; flex:1">📗 Excel</button>
-        <button class="btn" onclick="exportPDF()" style="background:var(--danger); color:white; flex:1">📄 PDF</button>
+
+      <div class="card-box" style="min-height: 300px;">
+        <div id="container-rekap-hasil">
+          <p style="text-align:center; color: #999; margin-top: 50px;">Silakan pilih filter untuk menampilkan data.</p>
+        </div>
       </div>
     </div>
-
-    <div class="card-box" style="border-top: 4px solid var(--warning);">
-      <h3 style="color: var(--text-dark); margin-bottom: 10px;">📦 Arsip & Bersihkan</h3>
-      <p style="font-size: 0.75rem; color: var(--text-gray); margin-bottom: 12px; line-height: 1.4;">
-        Pindahkan data lama ke file baru agar database tetap ringan dan cepat.
-      </p>
-      
-      <div style="display: flex; gap: 8px; align-items: flex-end; background: #fffbeb; padding: 12px; border-radius: 8px; border: 1px solid #fef3c7;">
-        <div style="flex:2">
-          <label style="font-size: 0.65rem; font-weight: 800; color: #92400e; text-transform: uppercase;">Bulan</label>
-          <select id="arsipBulan" style="width: 100%; padding: 7px; border-radius: 5px; border: 1px solid #d1d5db;">
-            <option value="01">Januari</option>
-            <option value="02">Februari</option>
-            <option value="03">Maret</option>
-            <option value="04">April</option>
-            <option value="05">Mei</option>
-            <option value="06">Juni</option>
-            <option value="07">Juli</option>
-            <option value="08">Agustus</option>
-            <option value="09">September</option>
-            <option value="10">Oktober</option>
-            <option value="11">November</option>
-            <option value="12">Desember</option>
-          </select>
-        </div>
-        <div style="flex:1">
-          <label style="font-size: 0.65rem; font-weight: 800; color: #92400e; text-transform: uppercase;">Tahun</label>
-          <input type="number" id="arsipTahun" value="2026" style="width: 100%; padding: 7px; border-radius: 5px; border: 1px solid #d1d5db;">
-        </div>
-        <button class="btn" id="btnProsesArsip" onclick="jalankanProsesArsip()" style="background: var(--warning); color: white; padding: 8px 12px; height: 38px;" title="Pindahkan Data">
-          🚀
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <div class="card-box" style="min-height: 300px;">
-    <div id="container-rekap-hasil">
-      <p style="text-align:center; color: #999; margin-top: 50px;">Silakan pilih filter untuk menampilkan data.</p>
-    </div>
-  </div>
-</div>
 
     <div id="view-settings" style="display:none">
-  <h1>Pengaturan Sistem</h1>
-  <div class="card-box" style="max-width:600px; margin: 20px auto;">
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
-      <div><label>Jam Masuk Guru</label><input type="time" id="setJamMasukGuru" style="width:100%; padding:8px;"></div>
-      <div><label>Jam Masuk Tendik</label><input type="time" id="setJamMasukTendik" style="width:100%; padding:8px;"></div>
+      <h1>Pengaturan Sistem</h1>
+      <div class="card-box" style="max-width:600px; margin: 20px auto;">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+          <div><label>Jam Masuk Guru</label><input type="time" id="setJamMasukGuru" style="width:100%; padding:8px;"></div>
+          <div><label>Jam Masuk Tendik</label><input type="time" id="setJamMasukTendik" style="width:100%; padding:8px;"></div>
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
+          <div><label>Jam Buka Absen</label><input type="time" id="setAbMulai" style="width:100%; padding:8px;"></div>
+          <div><label>Jam Tutup Absen</label><input type="time" id="setAbSelesai" style="width:100%; padding:8px;"></div>
+        </div>
+        <div style="margin-bottom:15px;">
+          <label>Jam Pulang Minimal</label>
+          <input type="time" id="setJamPulang" style="width:100%; padding:8px;">
+        </div>
+        <div style="margin-bottom:15px;">
+          <label>Radius Absen (Meter)</label>
+          <input type="number" id="setRadius" style="width:100%; padding:8px;">
+        </div>
+        <hr style="margin:20px 0; opacity:0.2;">
+        <div style="margin-bottom:15px;">
+          <label>Admin Username</label>
+          <input type="text" id="setAdminUser" style="width:100%; padding:8px;">
+        </div>
+        <div style="margin-bottom:15px;">
+          <label>Admin Password Baru (Kosongkan jika tidak ganti)</label>
+          <input type="password" id="setAdminPass" style="width:100%; padding:8px;">
+        </div>
+        <button class="btn btn-primary" onclick="simpanSettings()" style="width:100%">💾 Simpan Perubahan</button>
+      </div>
     </div>
-    <div style="display:grid; grid-template-columns:1fr 1fr; gap:15px; margin-bottom:15px;">
-      <div><label>Jam Buka Absen</label><input type="time" id="setAbMulai" style="width:100%; padding:8px;"></div>
-      <div><label>Jam Tutup Absen</label><input type="time" id="setAbSelesai" style="width:100%; padding:8px;"></div>
-    </div>
-    <div style="margin-bottom:15px;">
-      <label>Jam Pulang Minimal</label>
-      <input type="time" id="setJamPulang" style="width:100%; padding:8px;">
-    </div>
-    <div style="margin-bottom:15px;">
-      <label>Radius Absen (Meter)</label>
-      <input type="number" id="setRadius" style="width:100%; padding:8px;">
-    </div>
-    <hr style="margin:20px 0; opacity:0.2;">
-    <div style="margin-bottom:15px;">
-      <label>Admin Username</label>
-      <input type="text" id="setAdminUser" style="width:100%; padding:8px;">
-    </div>
-    <div style="margin-bottom:15px;">
-      <label>Admin Password Baru (Kosongkan jika tidak ganti)</label>
-      <input type="password" id="setAdminPass" style="width:100%; padding:8px;">
-    </div>
-    <button class="btn btn-primary" onclick="simpanSettings()" style="width:100%">💾 Simpan Perubahan</button>
+
   </div>
-</div>
 
   <div class="sidebar-overlay" id="modalAddGTK" style="display:none; align-items:center; justify-content:center; z-index:2000;">
     <div class="card-box" style="width:90%; max-width:400px;">
@@ -285,7 +285,7 @@
 
   <script>
     /* --- KONFIGURASI --- */
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx2Tcs8Z3MDqhHSDx6_Y2YIStdqN8WiWnq21mS0odlkZhJ4P_YRNPSziRo9iXkC20Z3/exec"; // Masukkan URL .exec Anda di sini
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx2Tcs8Z3MDqhHSDx6_Y2YIStdqN8WiWnq21mS0odlkZhJ4P_YRNPSziRo9iXkC20Z3/exec"; 
 
     /* --- FUNGSI KOMUNIKASI API --- */
     async function apiCall(payload) {
@@ -302,9 +302,14 @@
     }
 
     async function apiGet(params) {
-      const query = new URLSearchParams(params).toString();
-      const response = await fetch(`${SCRIPT_URL}?${query}`);
-      return await response.json();
+      try {
+        const query = new URLSearchParams(params).toString();
+        const response = await fetch(`${SCRIPT_URL}?${query}`);
+        return await response.json();
+      } catch (err) {
+        console.error("API Error:", err);
+        alert("Gagal mengambil data dari server.");
+      }
     }
 
     /* --- LOGIN & NAVIGASI --- */
@@ -342,28 +347,14 @@
         if (nav) nav.classList.toggle('active', id === t);
       });
 
-      // Load data sesuai tab
-      if (t === 'dash') {
-        loadDashboard();
-      }
+      if (t === 'dash') loadDashboard();
+      if (t === 'gtk') fetchGTK();
+      if (t === 'rekap') populateFilterNama();
+      if (t === 'settings') loadSettings();
 
-      if (t === 'gtk') {
-        fetchGTK();
-      }
-
-      if (t === 'rekap') {
-        populateFilterNama();
-      }
-
-      if (t === 'settings') {
-        loadSettings();
-      }
-
-      // AUTO TUTUP SIDEBAR JIKA LAYAR HP
       if (window.innerWidth <= 768) {
         const sidebar = document.querySelector('.sidebar');
         const overlay = document.querySelector('.sidebar-overlay');
-
         if (sidebar) sidebar.classList.remove('active');
         if (overlay) overlay.classList.remove('active');
       }
@@ -396,12 +387,11 @@
       
       const res = await apiGet({ action: 'getDashboard' });
 
-      if (res) {
-        // Update Statistik
-        document.getElementById('valTotal').innerText = res.stats.total;
-        document.getElementById('valHadirCount').innerText = res.stats.hadir;
-        document.getElementById('valLate').innerText = res.stats.terlambat;
-        document.getElementById('valEarly').innerText = res.stats.pulangAwal;
+      if (res && res.stats && res.table) {
+        document.getElementById('valTotal').innerText = res.stats.total || 0;
+        document.getElementById('valHadirCount').innerText = res.stats.hadir || 0;
+        document.getElementById('valLate').innerText = res.stats.terlambat || 0;
+        document.getElementById('valEarly').innerText = res.stats.pulangAwal || 0;
 
         tbody.innerHTML = res.table.map(r => {
           const kehadiran = (r.kehadiran || "").toLowerCase().trim();
@@ -453,24 +443,28 @@
             </tr>
           `;
         }).join('');
+      } else {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;">Gagal memuat data dashboard.</td></tr>';
       }
     }
 
     /* --- GTK CRUD --- */
     async function fetchGTK() {
       const data = await apiGet({ action: 'getGTKList' });
-      document.getElementById('gtkTableBody').innerHTML = data.map(i => `
-        <tr>
-          <td><code>${i.id}</code></td>
-          <td>${i.nip || '-'}</td>
-          <td>${i.nama}</td>
-          <td>${i.jabatan}</td>
-          <td>
-            <button onclick='editGTK(${JSON.stringify(i)})' style="color:blue; background:none; border:none; cursor:pointer;">✏️</button>
-            <button onclick="hapusGTK('${i.id}')" style="color:red; background:none; border:none; cursor:pointer;">🗑️</button>
-          </td>
-        </tr>
-      `).join('');
+      if(Array.isArray(data)) {
+        document.getElementById('gtkTableBody').innerHTML = data.map(i => `
+          <tr>
+            <td><code>${i.id}</code></td>
+            <td>${i.nip || '-'}</td>
+            <td>${i.nama}</td>
+            <td>${i.jabatan}</td>
+            <td>
+              <button onclick='editGTK(${JSON.stringify(i)})' style="color:blue; background:none; border:none; cursor:pointer;">✏️</button>
+              <button onclick="hapusGTK('${i.id}')" style="color:red; background:none; border:none; cursor:pointer;">🗑️</button>
+            </td>
+          </tr>
+        `).join('');
+      }
     }
 
     function showModalGTK() { 
@@ -526,10 +520,9 @@
       
       const data = await apiGet({ action: 'getRekapData', mode, tM, tS });
       
-      // Filter data jika ada nama spesifik yang dipilih
-      let dataFiltered = data;
+      let dataFiltered = data || [];
       if (namaDipilih && namaDipilih !== "") {
-        dataFiltered = data.filter(r => r.nama === namaDipilih);
+        dataFiltered = dataFiltered.filter(r => r.nama === namaDipilih);
       }
 
       window.dataRekapTerakhir = dataFiltered;
@@ -645,7 +638,7 @@
           xml += `<Cell><Data ss:Type="Number">${i + 1}</Data></Cell>`;
           xml += `<Cell><Data ss:Type="String">${r.nama}</Data></Cell>`;
           xml += `<Cell><Data ss:Type="String">${r.jabatan}</Data></Cell>`;
-          xml += `<Cell><Data ss:Type="String">${r.kehadiran}</Data></Cell>`;
+          xml += `<Cell><Data ss:Type="String">${r.kehadiran || '-'}</Data></Cell>`;
           xml += `<Cell><Data ss:Type="String">${r.jam_datang || '-'}</Data></Cell>`;
           xml += `<Cell><Data ss:Type="String">${r.jam_pulang || '-'}</Data></Cell>`;
           xml += `<Cell><Data ss:Type="String">${r.keterangan || '-'}</Data></Cell>`;
@@ -670,57 +663,32 @@
     function exportPDF() { window.print(); }
 
     /* --- SETTINGS --- */
-    function loadSettings() {
-      google.script.run
-        .withSuccessHandler(function(s) {
-          if (!s) return;
+    async function loadSettings() {
+      const s = await apiGet({ action: 'getSettings' });
+      if (!s) return;
 
-          const setVal = (id, val) => {
-            const el = document.getElementById(id);
-            if (el) el.value = val || "";
-          };
+      const setVal = (id, val) => {
+        const el = document.getElementById(id);
+        if (el) el.value = val || "";
+      };
 
-          setVal('setAbMulai', s.jamAbsenMulai);
-          setVal('setAbSelesai', s.jamAbsenSelesai);
-          setVal('setJamMasukGuru', s.jamTerlambatGuru);
-          setVal('setJamMasukTendik', s.jamTerlambatTendik);
-          setVal('setJamPulang', s.jamPulangMinimal);
-          setVal('setRadius', s.radiusMeter || 0);
-          setVal('setAdminUser', s.admin_user);
-
-          if (s.hariKerja) {
-            const hariAktif = s.hariKerja.toString().split(',');
-            const checkboxes = document.querySelectorAll('input[name="hariKerja"]');
-            checkboxes.forEach(cb => {
-              cb.checked = hariAktif.includes(cb.value);
-            });
-          }
-        })
-        .withFailureHandler(function(err) {
-          console.error("Gagal memuat pengaturan:", err);
-        })
-        .getSystemSettings();
+      setVal('setAbMulai', s.jamAbsenMulai);
+      setVal('setAbSelesai', s.jamAbsenSelesai);
+      setVal('setJamMasukGuru', s.jamTerlambatGuru);
+      setVal('setJamMasukTendik', s.jamTerlambatTendik);
+      setVal('setJamPulang', s.jamPulangMinimal);
+      setVal('setRadius', s.radiusMeter || 0);
+      setVal('setAdminUser', s.admin_user);
     }
 
-    function simpanSettings() {
-      const btn = document.querySelector('.btn-full') || document.querySelector('#view-settings .btn-primary');
-      const originalText = btn ? btn.innerText : "💾 Perbarui Pengaturan";
-
-      if (btn) {
-        btn.innerText = "⏳ Menyimpan...";
-        btn.disabled = true;
-      }
-
+    async function simpanSettings() {
       const getValue = (id) => {
         const el = document.getElementById(id);
         return el ? el.value : "";
       };
 
-      const hariChecked = Array.from(document.querySelectorAll('input[name="hariKerja"]:checked'))
-                               .map(cb => cb.value)
-                               .join(',');
-
-      const data = {
+      const payload = {
+        action: 'simpanSettings',
         jamAbsenMulai: getValue('setAbMulai'),
         jamAbsenSelesai: getValue('setAbSelesai'),
         jamTerlambatGuru: getValue('setJamMasukGuru'),
@@ -728,28 +696,13 @@
         jamPulangMinimal: getValue('setJamPulang'),
         radiusMeter: getValue('setRadius'),
         admin_user: getValue('setAdminUser'),
-        admin_pass: getValue('setAdminPass'),
-        hariKerja: hariChecked
+        admin_pass: getValue('setAdminPass')
       };
 
-      google.script.run
-        .withSuccessHandler(function(msg) {
-          alert(msg || "Pengaturan berhasil diperbarui!");
-          if (btn) {
-            btn.innerText = originalText;
-            btn.disabled = false;
-          }
-          const passEl = document.getElementById('setAdminPass');
-          if (passEl) passEl.value = "";
-        })
-        .withFailureHandler(function(err) {
-          alert("Gagal menyimpan: " + err.message);
-          if (btn) {
-            btn.innerText = originalText;
-            btn.disabled = false;
-          }
-        })
-        .saveSystemSettings(data);
+      const res = await apiCall(payload);
+      alert(res || "Pengaturan berhasil disimpan!");
+      const passEl = document.getElementById('setAdminPass');
+      if (passEl) passEl.value = "";
     }
 
     async function jalankanProsesArsip() {
@@ -770,24 +723,19 @@
       const btn = document.getElementById('btnProsesArsip');
       const originalText = btn.innerHTML;
       btn.disabled = true;
-      btn.innerHTML = "⏳ Sedang Memproses...";
+      btn.innerHTML = "⏳ Memproses...";
 
       try {
-        const response = await fetch(SCRIPT_URL, {
-          method: "POST",
-          body: JSON.stringify({
-            action: "arsipDataAbsensi",
-            bulan: bln,
-            tahun: thn
-          })
+        const res = await apiCall({
+          action: "arsipDataAbsensi",
+          bulan: bln,
+          tahun: thn
         });
 
-        const res = await response.json();
-
-        if (res.success) {
+        if (res && res.success) {
             alert("✅ " + res.message);
         } else {
-            alert("❌ " + res.message);
+            alert("❌ " + (res.message || "Gagal melakukan arsip data"));
         }
 
         if (typeof loadRekap === "function") loadRekap('custom');
