@@ -7,6 +7,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/gh/linways/table-to-excel@v1.0.4/dist/tableToExcel.js"></script>
   <style>
+    /* --- CSS ORIGINAL --- */
     :root { 
       --primary: #2563eb; 
       --primary-dark: #1e40af; 
@@ -17,6 +18,7 @@
       --danger: #ef4444; 
       --success: #22c55e; 
       --warning: #f59e0b; 
+      --info: #3b82f6;
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
@@ -54,7 +56,7 @@
     .bg-green { background: #dcfce7; color: #15803d; }
     .bg-red { background: #fee2e2; color: #b91c1c; }
     .bg-yellow { background: #fef3c7; color: #d97706; }
-    .bg-blue { background: #eff6ff; color: #2563eb; }
+    .bg-blue { background: #dbeafe; color: #1e40af; }
     
     .btn { padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 500; border: none; transition: 0.2s; }
     .btn-primary { background: var(--primary); color: white; }
@@ -83,10 +85,9 @@
 </head>
 <body>
 
-  <!-- LOGIN OVERLAY -->
   <div id="login-overlay">
     <div class="card-box" style="width:100%; max-width:350px; text-align:center;">
-      <img src="https://smkn1ktg.sch.id/logo/logo.gif" style="width:80px; margin-bottom:15px;" alt="Logo SMK N 1 KTG">
+      <img src="https://smkn1ktg.sch.id/logo/logo.gif" style="width:80px; margin-bottom:15px;">
       <h2>Admin Login</h2>
       <p style="font-size: 0.8rem; color: #64748b; margin-bottom: 20px;">E-Absensi SMK N 1 KTG</p>
       <input type="text" id="adminUser" placeholder="Username" style="width:100%; padding:10px; margin-bottom:10px; border:1px solid #ddd; border-radius:8px;">
@@ -99,10 +100,9 @@
     </div>
   </div>
 
-  <!-- SIDEBAR -->
   <div class="sidebar">
     <div class="sidebar-header">
-      <img src="https://smkn1ktg.sch.id/logo/logo.gif" class="logo-sidebar" alt="Logo">
+      <img src="https://smkn1ktg.sch.id/logo/logo.gif" class="logo-sidebar">
       <h3>SMK N 1 KOTAMOBAGU</h3>
     </div>
     <div class="nav-links">
@@ -116,10 +116,8 @@
   <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
   <button class="mobile-toggle" onclick="toggleSidebar()">☰</button>
 
-  <!-- MAIN CONTENT -->
   <div class="main-content">
     
-    <!-- DASHBOARD VIEW -->
     <div id="view-dash">
       <h1 style="margin-bottom: 20px;">Dashboard Utama</h1>
       <div class="stats-container">
@@ -139,7 +137,6 @@
       </div>
     </div>
 
-    <!-- GTK VIEW -->
     <div id="view-gtk" style="display:none">
       <div style="display:flex; justify-content:space-between; align-items:center">
         <h1>Manajemen GTK</h1>
@@ -155,7 +152,6 @@
       </div>
     </div>
 
-    <!-- REKAP VIEW -->
     <div id="view-rekap" style="display:none; padding: 20px;">
       <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
         <h1 style="margin:0; font-size: 1.5rem; color: var(--text-dark);">📊 Rekapitulasi Absensi</h1>
@@ -187,7 +183,8 @@
             <button class="btn btn-primary" onclick="loadRekap('custom')" style="flex:2">🔍 Tampilkan Data</button>
             <button class="btn" onclick="exportExcel()" style="background:var(--success); color:white; flex:1">📗 Excel</button>
             <button class="btn" onclick="exportPDF()" style="background:var(--danger); color:white; flex:1">📄 PDF</button>
-            <button class="btn" onclick="cetakRingkasanKehadiran()" style="background:#4f46e5; color:white; flex:2">🖨️ Cetak Ringkas</button>
+            <button onclick="cetakRingkasanKehadiran()" class="btn" style="background:#4f46e5; color:white; flex:2;">
+            🖨️ Cetak Rekap Ringkas</button>
           </div>
         </div>
 
@@ -233,7 +230,6 @@
       </div>
     </div>
 
-    <!-- SETTINGS VIEW -->
     <div id="view-settings" style="display:none">
       <h1>Pengaturan Sistem</h1>
       <div class="card-box" style="max-width:600px; margin: 20px auto;">
@@ -268,7 +264,6 @@
 
   </div>
 
-  <!-- MODAL FORM GTK -->
   <div class="sidebar-overlay" id="modalAddGTK" style="display:none; align-items:center; justify-content:center; z-index:2000;">
     <div class="card-box" style="width:90%; max-width:400px;">
       <h3 id="modalTitle">Tambah GTK</h3>
@@ -289,17 +284,17 @@
     </div>
   </div>
 
-  <!-- MODAL ZOOM FOTO -->
   <div id="modalFoto" class="modal-zoom" onclick="tutupModal()">
-    <img class="modal-content" id="imgFull" alt="Foto Absen">
+    <img class="modal-content" id="imgFull">
     <div id="captionModal" style="text-align:center; color:white; margin-top:10px;"></div>
   </div>
 
   <script>
-    /* --- KONFIGURASI API --- */
+    /* --- KONFIGURASI --- */
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx2Tcs8Z3MDqhHSDx6_Y2YIStdqN8WiWnq21mS0odlkZhJ4P_YRNPSziRo9iXkC20Z3/exec"; 
+
+    // Variable Global Daftar Libur
     let globalDaftarLibur = []; 
-    window.dataRekapTerakhir = [];
 
     /* --- FUNGSI KOMUNIKASI API --- */
     async function apiCall(payload) {
@@ -316,13 +311,9 @@
     }
 
     async function apiGet(params) {
-      try {
-        const query = new URLSearchParams(params).toString();
-        const response = await fetch(`${SCRIPT_URL}?${query}`);
-        return await response.json();
-      } catch (err) {
-        console.error("API Get Error:", err);
-      }
+      const query = new URLSearchParams(params).toString();
+      const response = await fetch(`${SCRIPT_URL}?${query}`);
+      return await response.json();
     }
 
     /* --- LOGIN & NAVIGASI --- */
@@ -360,14 +351,26 @@
         if (nav) nav.classList.toggle('active', id === t);
       });
 
-      if (t === 'dash') loadDashboard();
-      if (t === 'gtk') fetchGTK();
-      if (t === 'rekap') populateGtkDropdown();
-      if (t === 'settings') loadSettings();
+      if (t === 'dash') {
+        loadDashboard();
+      }
+
+      if (t === 'gtk') {
+        fetchGTK();
+      }
+
+      if (t === 'rekap') {
+        populateGtkDropdown();
+      }
+
+      if (t === 'settings') {
+        loadSettings();
+      }
 
       if (window.innerWidth <= 768) {
         const sidebar = document.querySelector('.sidebar');
         const overlay = document.querySelector('.sidebar-overlay');
+
         if (sidebar) sidebar.classList.remove('active');
         if (overlay) overlay.classList.remove('active');
       }
@@ -386,39 +389,58 @@
       const res = await apiGet({ action: 'getDashboard' });
 
       if (res) {
-        document.getElementById('valTotal').innerText = res.stats.total || 0;
-        document.getElementById('valHadirCount').innerText = res.stats.hadir || 0;
-        document.getElementById('valLate').innerText = res.stats.terlambat || 0;
-        document.getElementById('valEarly').innerText = res.stats.pulangAwal || 0;
+        // Simpan data libur jika server mengembalikan daftar libur
+        if (res.daftarLibur && Array.isArray(res.daftarLibur)) {
+          globalDaftarLibur = res.daftarLibur;
+        }
 
-        tbody.innerHTML = (res.table || []).map(r => {
+        document.getElementById('valTotal').innerText = res.stats.total;
+        document.getElementById('valHadirCount').innerText = res.stats.hadir;
+        document.getElementById('valLate').innerText = res.stats.terlambat;
+        document.getElementById('valEarly').innerText = res.stats.pulangAwal;
+
+        tbody.innerHTML = res.table.map(r => {
           const kehadiran = (r.kehadiran || "").toLowerCase().trim();
           const keterangan = (r.keterangan || "").toLowerCase().trim();
 
           let badgeClass = "bg-green";
           let statusTeks = "Hadir";
 
-          if (kehadiran.includes("tidak hadir") || r.jam_datang === "-" || r.jam_datang === "") {
+          if (kehadiran.includes("libur") || keterangan.includes("libur") || res.isHariLibur) {
+            badgeClass = "bg-blue";
+            statusTeks = "Libur";
+          }
+          else if (kehadiran.includes("tidak hadir") || r.jam_datang === "-" || r.jam_datang === "") {
             badgeClass = "bg-red";
             statusTeks = "Tidak Hadir";
           }
           else if (kehadiran.includes("terlambat")) {
-            badgeClass = "bg-red";
+            badgeClass = "bg-yellow";
             statusTeks = "Hadir (Terlambat)";
+          }
+          else {
+            badgeClass = "bg-green";
+            statusTeks = "Hadir";
           }
 
           let htmlFoto = `
             <div style="display:flex; gap:4px; justify-content:center;">
               ${r.foto_datang ? 
-                `<img src="${r.foto_datang}" width="35" height="35" onclick="bukaModal('${r.foto_datang}', '${r.nama}')" style="cursor:pointer; border-radius:4px; object-fit:cover;">` : ''}
+                `<img src="${r.foto_datang}" width="35" height="35"
+                  onclick="bukaModal('${r.foto_datang}', '${r.nama}')"
+                  style="cursor:pointer; border-radius:4px; object-fit:cover;">` : ''}
+
               ${r.foto_pulang ? 
-                `<img src="${r.foto_pulang}" width="35" height="35" onclick="bukaModal('${r.foto_pulang}', '${r.nama}')" style="cursor:pointer; border-radius:4px; object-fit:cover;">` : ''}
+                `<img src="${r.foto_pulang}" width="35" height="35"
+                  onclick="bukaModal('${r.foto_pulang}', '${r.nama}')"
+                  style="cursor:pointer; border-radius:4px; object-fit:cover;">` : ''}
+
               ${!r.foto_datang && !r.foto_pulang ? '-' : ''}
             </div>
           `;
 
           return `
-            <tr style="${statusTeks === 'Tidak Hadir' ? 'background-color: #fef2f2;' : ''}">
+            <tr style="${statusTeks === 'Tidak Hadir' ? 'background-color: #fef2f2;' : (statusTeks === 'Libur' ? 'background-color: #eff6ff;' : '')}">
               <td><b>${r.nama}</b></td>
               <td><small>${r.jabatan}</small></td>
               <td><span class="badge ${badgeClass}">${statusTeks}</span></td>
@@ -439,7 +461,6 @@
     /* --- GTK CRUD --- */
     async function fetchGTK() {
       const data = await apiGet({ action: 'getGTKList' });
-      if (!data) return;
       document.getElementById('gtkTableBody').innerHTML = data.map(i => `
         <tr>
           <td><code>${i.id}</code></td>
@@ -458,7 +479,6 @@
       document.getElementById('modalAddGTK').style.display = 'flex'; 
       document.getElementById('formGTK').reset();
       document.getElementById('oldId').value = "";
-      document.getElementById('modalTitle').innerText = "Tambah GTK";
     }
 
     function closeModalGTK() { document.getElementById('modalAddGTK').style.display = 'none'; }
@@ -498,14 +518,28 @@
     }
 
     /* --- REKAP & EXPORT --- */
+    window.dataRekapTerakhir = [];
+
     async function loadRekap(mode) {
       const container = document.getElementById('container-rekap-hasil');
       container.innerHTML = "⏳ Memuat rekap...";
       const tM = document.getElementById('filterTglMulai').value;
       const tS = document.getElementById('filterTglSelesai').value;
       
-      const data = await apiGet({ action: 'getRekapData', mode, tM, tS });
-      window.dataRekapTerakhir = data || [];
+      const res = await apiGet({ action: 'getRekapData', mode, tM, tS });
+
+      // Cek apakah response berupa object yang berisi data & daftarLibur
+      if (res && res.data) {
+        window.dataRekapTerakhir = res.data;
+        if (res.daftarLibur && Array.isArray(res.daftarLibur)) {
+          globalDaftarLibur = res.daftarLibur;
+        }
+      } else if (Array.isArray(res)) {
+        window.dataRekapTerakhir = res;
+      } else {
+        window.dataRekapTerakhir = [];
+      }
+
       renderTabelRekap(window.dataRekapTerakhir);
     }
 
@@ -531,7 +565,10 @@
         return;
       }
 
-      let filteredData = selectedGtk ? data.filter(d => d.nama === selectedGtk) : data;
+      let filteredData = data;
+      if (selectedGtk) {
+        filteredData = data.filter(d => d.nama === selectedGtk);
+      }
 
       if (filteredData.length === 0) {
         container.innerHTML = '<div style="text-align:center; padding:20px;">📭 Tidak ada data untuk GTK yang dipilih.</div>';
@@ -540,9 +577,14 @@
 
       let html = '<div id="rekapPrintArea">';
 
+      // OPSI CETAK PER NAMA GTK INDIVIDU
       if (selectedGtk) {
         const gtkInfo = filteredData[0];
-        let totalHadir = 0, totalTerlambat = 0, totalTidakHadir = 0, totalLibur = 0;
+        
+        let totalHadir = 0;
+        let totalTerlambat = 0;
+        let totalTidakHadir = 0;
+        let totalLibur = 0;
 
         filteredData.forEach(r => {
           const status = (r.kehadiran || "").toLowerCase().trim();
@@ -553,16 +595,22 @@
           const isTidakHadir = !isLibur && (!jamDatang || jamDatang === '-' || status.includes('tidak hadir') || status.includes('alpa') || status.includes('izin') || status.includes('sakit') || ket.includes('tanpa keterangan'));
           const isTerlambat = !isLibur && (status.includes('terlambat') || ket.includes('terlambat'));
 
-          if (isLibur) totalLibur++;
-          else if (isTidakHadir) totalTidakHadir++;
-          else if (isTerlambat) { totalTerlambat++; totalHadir++; }
-          else totalHadir++;
+          if (isLibur) {
+            totalLibur++;
+          } else if (isTidakHadir) {
+            totalTidakHadir++;
+          } else if (isTerlambat) {
+            totalTerlambat++;
+            totalHadir++;
+          } else {
+            totalHadir++;
+          }
         });
 
         html += `
           <div class="group-gtk" style="color: black; margin-bottom: 30px;">
             <div class="kop-surat" style="text-align: center; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 15px;">
-              <img src="https://smkn1ktg.sch.id/logo/logo.gif" style="width: 50px; height: auto; margin-bottom: 5px;" alt="Logo">
+              <img src="https://smkn1ktg.sch.id/logo/logo.gif" style="width: 50px; height: auto; margin-bottom: 5px;">
               <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase;">Laporan Kehadiran Individu GTK</div>
               <div style="font-size: 12pt; font-weight: bold; text-transform: uppercase;">SMK Negeri 1 Kotamobagu</div>
             </div>
@@ -634,6 +682,7 @@
 
         html += `</tbody></table></div>`;
 
+      // OPSI REKAP KOLEKTIF SEMUA GTK PER TANGGAL
       } else {
         const grouped = filteredData.reduce((acc, curr) => {
           if (!acc[curr.tanggal]) acc[curr.tanggal] = [];
@@ -651,7 +700,7 @@
           html += `
             <div class="group-tanggal" style="margin-bottom: 50px; page-break-after: always; color: black;">
               <div class="kop-surat" style="text-align: center; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 15px;">
-                <img src="https://smkn1ktg.sch.id/logo/logo.gif" style="width: 50px; height: auto; margin-bottom: 5px;" alt="Logo">
+                <img src="https://smkn1ktg.sch.id/logo/logo.gif" style="width: 50px; height: auto; margin-bottom: 5px;">
                 <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase;">Rekap E-Absensi GTK</div>
                 <div style="font-size: 12pt; font-weight: bold; text-transform: uppercase;">SMK Negeri 1 Kotamobagu</div>
                 <div style="font-size: 9pt; font-weight: normal;">Tanggal Laporan: ${tgl}</div>
@@ -744,12 +793,16 @@
       };
 
       if (selectedGtk) {
-        let csvContent = "\uFEFF";
+        let csvContent = "\uFEFF"; 
         csvContent += "No;Tanggal;Nama GTK;Jabatan;Status;Jam Masuk;Jam Pulang;Keterangan\n";
 
         filteredData.forEach((r, i) => {
-          const isTidakHadir = !r.jam_datang || r.jam_datang === '-' || (r.kehadiran && r.kehadiran.toLowerCase().includes('tidak hadir'));
-          const statusText = isTidakHadir ? 'Tidak Hadir' : (r.kehadiran || 'Hadir');
+          const status = (r.kehadiran || "").toLowerCase();
+          const ket = (r.keterangan || "").toLowerCase();
+          const isLibur = globalDaftarLibur.includes(r.tanggal) || status.includes('libur') || ket.includes('libur');
+          const isTidakHadir = !isLibur && (!r.jam_datang || r.jam_datang === '-' || status.includes('tidak hadir'));
+          
+          let statusText = isLibur ? 'Libur' : (isTidakHadir ? 'Tidak Hadir' : (r.kehadiran || 'Hadir'));
           
           const row = [
             i + 1,
@@ -810,8 +863,12 @@
         xml += '</Row>';
 
         grouped[tgl].forEach((r, i) => {
-          const isTidakHadir = !r.jam_datang || r.jam_datang === '-' || (r.kehadiran && r.kehadiran.toLowerCase().includes('tidak hadir'));
-          const statusText = isTidakHadir ? 'Tidak Hadir' : (r.kehadiran || 'Hadir');
+          const status = (r.kehadiran || "").toLowerCase();
+          const ket = (r.keterangan || "").toLowerCase();
+          const isLibur = globalDaftarLibur.includes(r.tanggal) || status.includes('libur') || ket.includes('libur');
+          const isTidakHadir = !isLibur && (!r.jam_datang || r.jam_datang === '-' || status.includes('tidak hadir'));
+
+          let statusText = isLibur ? 'Libur' : (isTidakHadir ? 'Tidak Hadir' : (r.kehadiran || 'Hadir'));
 
           xml += '<Row>';
           xml += `<Cell><Data ss:Type="Number">${i + 1}</Data></Cell>`;
@@ -839,7 +896,7 @@
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }
-
+    
     function exportPDF() { window.print(); }
 
     /* --- SETTINGS --- */
@@ -848,6 +905,7 @@
         google.script.run
           .withSuccessHandler(function(s) {
             if (!s) return;
+
             const setVal = (id, val) => {
               const el = document.getElementById(id);
               if (el) el.value = val || "";
@@ -860,6 +918,14 @@
             setVal('setJamPulang', s.jamPulangMinimal);
             setVal('setRadius', s.radiusMeter || 0);
             setVal('adminUserSet', s.admin_user);
+
+            if (s.hariKerja) {
+              const hariAktif = s.hariKerja.toString().split(',');
+              const checkboxes = document.querySelectorAll('input[name="hariKerja"]');
+              checkboxes.forEach(cb => {
+                cb.checked = hariAktif.includes(cb.value);
+              });
+            }
           })
           .withFailureHandler(function(err) {
             console.error("Gagal memuat pengaturan:", err);
@@ -869,7 +935,7 @@
     }
 
     function simpanSettings() {
-      const btn = document.querySelector('#view-settings .btn-primary');
+      const btn = document.querySelector('.btn-full') || document.querySelector('#view-settings .btn-primary');
       const originalText = btn ? btn.innerText : "💾 Perbarui Pengaturan";
 
       if (btn) {
@@ -882,6 +948,10 @@
         return el ? el.value : "";
       };
 
+      const hariChecked = Array.from(document.querySelectorAll('input[name="hariKerja"]:checked'))
+                               .map(cb => cb.value)
+                               .join(',');
+
       const data = {
         jamAbsenMulai: getValue('setAbMulai'),
         jamAbsenSelesai: getValue('setAbSelesai'),
@@ -890,7 +960,8 @@
         jamPulangMinimal: getValue('setJamPulang'),
         radiusMeter: getValue('setRadius'),
         admin_user: getValue('adminUserSet'),
-        admin_pass: getValue('adminPassSet')
+        admin_pass: getValue('adminPassSet'),
+        hariKerja: hariChecked
       };
 
       if (typeof google !== 'undefined' && google.script && google.script.run) {
@@ -936,12 +1007,21 @@
       btn.innerHTML = "⏳ Sedang Memproses...";
 
       try {
-        const res = await apiCall({ action: "arsipDataAbsensi", bulan: bln, tahun: thn });
+        const response = await fetch(SCRIPT_URL, {
+          method: "POST",
+          body: JSON.stringify({
+            action: "arsipDataAbsensi",
+            bulan: bln,
+            tahun: thn
+          })
+        });
 
-        if (res && res.success) {
+        const res = await response.json();
+
+        if (res.success) {
             alert("✅ " + res.message);
         } else {
-            alert("❌ " + (res ? res.message : "Gagal memproses arsip."));
+            alert("❌ " + res.message);
         }
 
         if (typeof loadRekap === "function") loadRekap('custom');
@@ -955,7 +1035,22 @@
       }
     }
 
-    /* --- CETAK RINGKASAN KEHADIRAN --- */
+    /* --- UTILS --- */
+    function bukaModal(url, nama) {
+      document.getElementById("modalFoto").style.display = "block";
+      document.getElementById("imgFull").src = url;
+      document.getElementById("captionModal").innerText = "Foto: " + nama;
+    }
+    function tutupModal() { document.getElementById("modalFoto").style.display = "none"; }
+    function logout() { sessionStorage.clear(); location.reload(); }
+
+    window.onload = () => {
+      if(sessionStorage.getItem('isLoggedIn') === 'true') {
+        document.getElementById('login-overlay').style.display = 'none';
+        loadDashboard();
+      }
+    };
+
     function cetakRingkasanKehadiran() {
       const data = window.dataRekapTerakhir;
       if (!data || data.length === 0) {
@@ -976,6 +1071,7 @@
             hadirTepat: 0,
             terlambat: 0,
             tidakHadir: 0,
+            libur: 0,
             totalHari: 0
           });
         }
@@ -985,11 +1081,14 @@
         const statusKehadiran = (r.kehadiran || '').toLowerCase().trim();
         const ket = (r.keterangan || '').toLowerCase().trim();
 
+        const isLibur = globalDaftarLibur.includes(r.tanggal) || statusKehadiran.includes('libur') || ket.includes('libur');
         const isAbsenKosong = !jamDatang || jamDatang === '-';
         const isStatusTidakHadir = statusKehadiran.includes('tidak hadir') || statusKehadiran.includes('alpa') || statusKehadiran.includes('izin') || statusKehadiran.includes('sakit');
         const isKetTidakHadir = ket.includes('tidak absen') || ket.includes('tanpa keterangan');
 
-        if (isAbsenKosong || isStatusTidakHadir || isKetTidakHadir) {
+        if (isLibur) {
+          item.libur += 1;
+        } else if (isAbsenKosong || isStatusTidakHadir || isKetTidakHadir) {
           item.tidakHadir += 1;
         } else if (statusKehadiran.includes('terlambat') || ket.includes('terlambat')) {
           item.terlambat += 1;
@@ -1035,10 +1134,11 @@
                 <th width="4%">No</th>
                 <th>Nama GTK</th>
                 <th>Jabatan</th>
-                <th width="12%">Hadir (Tepat)</th>
-                <th width="12%">Terlambat</th>
-                <th width="12%">Tidak Hadir</th>
-                <th width="12%">Total Hari</th>
+                <th width="10%">Hadir</th>
+                <th width="10%">Terlambat</th>
+                <th width="10%">Tidak Hadir</th>
+                <th width="10%">Libur</th>
+                <th width="10%">Total Hari</th>
               </tr>
             </thead>
             <tbody>
@@ -1053,6 +1153,7 @@
             <td class="center" style="color: green;">${item.hadirTepat}</td>
             <td class="center" style="color: #d97706;">${item.terlambat}</td>
             <td class="center" style="color: red; font-weight: bold;">${item.tidakHadir}</td>
+            <td class="center" style="color: blue;">${item.libur}</td>
             <td class="center"><b>${item.totalHari}</b></td>
           </tr>
         `;
@@ -1084,22 +1185,6 @@
       printWindow.document.write(html);
       printWindow.document.close();
     }
-
-    /* --- UTILS --- */
-    function bukaModal(url, nama) {
-      document.getElementById("modalFoto").style.display = "block";
-      document.getElementById("imgFull").src = url;
-      document.getElementById("captionModal").innerText = "Foto: " + nama;
-    }
-    function tutupModal() { document.getElementById("modalFoto").style.display = "none"; }
-    function logout() { sessionStorage.clear(); location.reload(); }
-
-    window.onload = () => {
-      if(sessionStorage.getItem('isLoggedIn') === 'true') {
-        document.getElementById('login-overlay').style.display = 'none';
-        loadDashboard();
-      }
-    };
   </script>
 </body>
 </html>
