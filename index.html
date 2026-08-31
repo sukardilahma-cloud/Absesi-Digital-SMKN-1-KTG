@@ -1,24 +1,25 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>E-Absensi SMK N 1 Kotamobagu</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js"></script>
     <style>
         body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); color: white; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); padding: 15px 20px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 90%; max-width: 400px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.2); }
+        .container { background: rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px); padding: 15px 20px; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); width: 90%; max-width: 420px; text-align: center; border: 1px solid rgba(255, 255, 255, 0.2); }
         .logo-school { width: 65px; height: auto; margin-bottom: 5px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); }
         h2 { font-size: 1rem; margin: 0; letter-spacing: 0.5px; font-weight: 600; text-transform: uppercase; }
         h3 { font-size: 0.85rem; margin: 0 0 5px 0; font-weight: 400; opacity: 0.9; }
         #clock { font-size: 1.4rem; font-weight: 600; margin: 0 0 10px 0; color: #00ff88; text-shadow: 0 2px 4px rgba(0,0,0,0.3); }
-        .camera-box { width: 100%; height: 480px; margin-bottom: 10px; border: 3px solid #fff; border-radius: 15px; overflow: hidden; background: #000; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .camera-box { width: 100%; height: 440px; margin-bottom: 10px; border: 3px solid #fff; border-radius: 15px; overflow: hidden; background: #000; position: relative; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
         #webcam, #photoPreview { width: 100%; height: 100%; object-fit: cover; }
         #webcam { transform: scaleX(-1); }
         .coords-container { display: flex; gap: 6px; margin-bottom: 10px; }
         .coord-box { flex: 1; background: rgba(0, 0, 0, 0.3); padding: 5px; border-radius: 8px; font-size: 0.65rem; }
         .coord-label { display: block; font-size: 0.5rem; color: #bbb; font-weight: bold; }
-        input { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: none; box-sizing: border-box; text-align: center; font-family: 'Poppins'; outline: none; font-weight: 600; color: #333; }
+        input, select { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: none; box-sizing: border-box; text-align: center; font-family: 'Poppins'; outline: none; font-weight: 600; color: #333; }
         .button-group { display: flex; gap: 8px; margin-bottom: 8px; }
         .btn { width: 100%; padding: 10px; border: none; border-radius: 8px; font-weight: bold; color: white; cursor: pointer; transition: 0.3s; font-family: 'Poppins'; }
         .btn-datang { background: #00c853; flex: 1; opacity: 0.5; }
@@ -33,6 +34,13 @@
         .success-box { background: rgba(0,200,83,0.2); color: #00ff88; padding: 8px; border-radius: 10px; border: 1px solid #00c853; }
         .btn-keluar { background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3); color: white; font-size: 0.7rem; margin-top: 15px; padding: 6px 15px; border-radius: 20px; cursor: pointer; transition: 0.3s; font-family: 'Poppins'; width: auto; display: inline-block; }
         .btn-home-monitoring { display: block; width: 100%; margin-top: 12px; padding: 12px; background: #ffffff; color: #1e3c72; border: none; border-radius: 12px; font-size: 0.85rem; font-weight: 600; cursor: pointer; box-shadow: 0 4px 15px rgba(0,0,0,0.2); transition: 0.3s; text-transform: uppercase; letter-spacing: 1px; }
+        
+        /* Badges Warna Status */
+        .badge { padding: 3px 8px; border-radius: 4px; color: white; font-weight: bold; font-size: 8pt; display: inline-block; }
+        .bg-green { background-color: #16a34a; }
+        .bg-yellow { background-color: #d97706; }
+        .bg-red { background-color: #dc2626; }
+        .bg-blue { background-color: #2563eb; }
     </style>
 </head>
 <body>
@@ -51,7 +59,7 @@
 
     <div id="mainApp" style="display: none;">
         <div id="userInfo" class="user-info">
-            <b id="displayNama"> Nama User </b>
+            <b id="displayNama"> Nama User </b> | 
             <span id="displayJabatan"> Jabatan </span>
         </div>
 
@@ -82,6 +90,8 @@
         <button onclick="logoutKeLogin()" class="btn-keluar">← Keluar / Ganti Akun</button>
         <button onclick="bukaDashboard()" class="btn-home-monitoring">🏠 MONITORING KEHADIRAN</button>
     </div>
+
+    <div id="container-rekap-hasil" style="margin-top:20px;"></div>
 </div>
 
 <script>
@@ -89,10 +99,14 @@
 
     let currentLat = 0, currentLon = 0, userData = null, statusAbsen = ""; 
     let modelsLoaded = false, preparedPayload = null;
+    let globalDaftarLibur = [];
+    window.rawRekapData = [];
+
     const video = document.getElementById('webcam');
     const photoPreview = document.getElementById('photoPreview');
     const canvas = document.getElementById('canvas');
 
+    // 1. LOAD FACE-API MODEL
     async function loadModels() {
         const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api/model';
         await faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL);
@@ -100,6 +114,7 @@
     }
     loadModels();
 
+    // 2. JAM DIGITAL & DETEKSI WAJAH CONTINUOUS
     setInterval(() => { 
         document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID'); 
         if(modelsLoaded && video.srcObject && video.style.display !== 'none' && !video.paused) {
@@ -116,6 +131,7 @@
         return detection;
     }
 
+    // 3. LOGIC LOGIN
     function prosesLogin() {
         const nip = document.getElementById('nipInput').value.trim();
         if (!nip) return alert("Masukkan ID/NIP!");
@@ -155,9 +171,11 @@
         .catch(err => {
             alert("Error: Hubungan ke server terputus");
             btnLogin.disabled = false;
+            btnLogin.innerText = "LANJUTKAN";
         });
     }
 
+    // 4. INISIALISASI KAMERA & GPS
     async function initCameraAndGPS() {
         try { 
             const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
@@ -174,6 +192,7 @@
         }
     }
 
+    // 5. PILIH STATUS TIPE ABSEN
     function selectType(type) {
         statusAbsen = (type === 'Datang') ? 'in' : 'out';
         document.getElementById('btnDatang').classList.remove('active-status');
@@ -185,6 +204,7 @@
         }
     }
 
+    // 6. TANGKAP FOTO ABSENSI
     async function prosesAmbilAbsen() {
         if(!userData || !statusAbsen || currentLat === 0) return alert("Pilih status DATANG/PULANG dan pastikan lokasi GPS terdeteksi!");
         
@@ -224,17 +244,18 @@
         photoPreview.src = imageData;
         photoPreview.style.display = 'block';
         video.style.display = 'none';
-        if (video.srcObject) video.pause(); // Jeda kamera untuk menghemat resource
+        if (video.srcObject) video.pause(); // Jeda kamera menghemat daya
 
         btn.style.display = 'none';
         document.getElementById('postCaptureGroup').style.display = 'block';
         msg.innerHTML = `<div style="color:#00ff88;">✅ Foto berhasil diambil. Klik "KIRIM ABSEN" untuk menyimpan.</div>`;
     }
 
+    // 7. ULANG FOTO
     function ulangFoto() {
         photoPreview.style.display = 'none';
         video.style.display = 'block';
-        if (video.srcObject) video.play(); // Play kembali kamera
+        if (video.srcObject) video.play(); // Putar kembali video kamera
         document.getElementById('btnAmbil').style.display = 'block';
         document.getElementById('btnAmbil').disabled = false;
         document.getElementById('postCaptureGroup').style.display = 'none';
@@ -242,6 +263,7 @@
         preparedPayload = null;
     }
 
+    // 8. KIRIM ABSEN
     function kirimAbsen() {
         if (!preparedPayload) return alert("Belum ada foto yang siap dikirim!");
 
@@ -285,19 +307,197 @@
         location.reload();
     }
 
-    let globalDaftarLibur = [];
+    // ============================================================
+    // INTEGRASI REKAP DATA & PENGECEKAN HARI LIBUR
+    // ============================================================
+    function loadDataRekap() {
+        const container = document.getElementById('container-rekap-hasil');
+        if (container) {
+            container.innerHTML = '<div style="text-align:center; padding:20px;">⏳ Memuat data rekap absensi...</div>';
+        }
 
-// Fungsi saat memuat data rekap
-function loadDataRekap() {
-  google.script.run.withSuccessHandler(function(response) {
-    // response berisi { rekap: [...], libur: [...] }
-    globalDaftarLibur = response.libur || [];
-    
-    // Simpan data rekap dan render tabel
-    window.rawRekapData = response.rekap;
-    renderTabelRekap(response.rekap);
-  }).getRekapDataCombined();
-}
+        if (typeof google !== 'undefined' && google.script && google.script.run) {
+            google.script.run
+                .withSuccessHandler(function(response) {
+                    globalDaftarLibur = response.libur || [];
+                    window.rawRekapData = response.rekap || [];
+                    renderTabelRekap(window.rawRekapData);
+                })
+                .withFailureHandler(function(err) {
+                    console.error("Gagal memuat rekap:", err);
+                    if (container) container.innerHTML = '<div style="text-align:center; color:red; padding:20px;">❌ Gagal mengambil data.</div>';
+                })
+                .getRekapDataCombined();
+        }
+    }
+
+    function renderTabelRekap(data) {
+        const container = document.getElementById('container-rekap-hasil');
+        if (!container) return;
+
+        const selectedGtk = document.getElementById('filterGtkSelect') ? document.getElementById('filterGtkSelect').value : '';
+
+        if (!data || data.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:20px;">📭 Tidak ada data ditemukan.</div>';
+            return;
+        }
+
+        let filteredData = selectedGtk ? data.filter(d => d.nama === selectedGtk) : data;
+
+        if (filteredData.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:20px;">📭 Tidak ada data untuk GTK yang dipilih.</div>';
+            return;
+        }
+
+        let html = '<div id="rekapPrintArea">';
+
+        // LAPORAN INDIVIDU
+        if (selectedGtk) {
+            const gtkInfo = filteredData[0];
+            let totalHadir = 0, totalTerlambat = 0, totalTidakHadir = 0, totalLibur = 0;
+
+            filteredData.forEach(r => {
+                const status = (r.kehadiran || "").toLowerCase().trim();
+                const ket = (r.keterangan || "").toLowerCase().trim();
+                const jamDatang = (r.jam_datang || "").trim();
+
+                const isLibur = globalDaftarLibur.includes(r.tanggal) || status.includes('libur') || ket.includes('libur');
+                const isTidakHadir = !isLibur && (!jamDatang || jamDatang === '-' || status.includes('tidak hadir') || status.includes('alpa') || status.includes('izin') || status.includes('sakit') || ket.includes('tanpa keterangan'));
+                const isTerlambat = !isLibur && (status.includes('terlambat') || ket.includes('terlambat'));
+
+                if (isLibur) totalLibur++;
+                else if (isTidakHadir) totalTidakHadir++;
+                else if (isTerlambat) { totalTerlambat++; totalHadir++; }
+                else totalHadir++;
+            });
+
+            html += `
+                <div class="group-gtk" style="color: black; background:#fff; padding:15px; border-radius:10px; margin-bottom: 20px;">
+                    <div style="text-align: center; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 15px;">
+                        <img src="https://smkn1ktg.sch.id/logo/logo.gif" style="width: 50px; height: auto;">
+                        <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase;">Laporan Kehadiran Individu GTK</div>
+                        <div style="font-size: 12pt; font-weight: bold;">SMK Negeri 1 Kotamobagu</div>
+                    </div>
+
+                    <table style="width:100%; margin-bottom:15px; font-size:10pt; border:none; text-align:left;">
+                        <tr><td width="120"><b>Nama GTK</b></td><td width="10">:</td><td>${gtkInfo.nama}</td></tr>
+                        <tr><td><b>Jabatan</b></td><td>:</td><td>${gtkInfo.jabatan}</td></tr>
+                    </table>
+
+                    <div style="display:flex; gap:8px; margin-bottom:15px; font-size:8pt; flex-wrap:wrap; justify-content:center;">
+                        <div style="padding:6px 10px; background:#dcfce7; border:1px solid #16a34a; border-radius:4px; color:#16a34a;">Hadir: <b>${totalHadir}</b></div>
+                        <div style="padding:6px 10px; background:#fef3c7; border:1px solid #d97706; border-radius:4px; color:#d97706;">Terlambat: <b>${totalTerlambat}</b></div>
+                        <div style="padding:6px 10px; background:#fee2e2; border:1px solid #dc2626; border-radius:4px; color:#dc2626;">Tidak Hadir: <b>${totalTidakHadir}</b></div>
+                        <div style="padding:6px 10px; background:#eff6ff; border:1px solid #2563eb; border-radius:4px; color:#2563eb;">Libur: <b>${totalLibur}</b></div>
+                    </div>
+
+                    <table border="1" style="width:100%; border-collapse:collapse; font-size: 9pt;">
+                        <thead>
+                            <tr style="background: #f1f5f9;">
+                                <th width="30">No</th>
+                                <th>Tanggal</th>
+                                <th>Status</th>
+                                <th>Masuk</th>
+                                <th>Pulang</th>
+                                <th>Keterangan</th>
+                            </tr>
+                        </thead>
+                        <tbody>`;
+
+            filteredData.forEach((r, i) => {
+                const status = (r.kehadiran || "").toLowerCase().trim();
+                const ket = (r.keterangan || "").toLowerCase().trim();
+                const jamDatang = (r.jam_datang || "").trim();
+
+                const isLibur = globalDaftarLibur.includes(r.tanggal) || status.includes('libur') || ket.includes('libur');
+                const isTidakHadir = !isLibur && (!jamDatang || jamDatang === '-' || status.includes('tidak hadir') || status.includes('alpa') || status.includes('izin') || status.includes('sakit') || ket.includes('tanpa keterangan'));
+                const isTerlambat = !isLibur && (status.includes('terlambat') || ket.includes('terlambat'));
+
+                let badgeClass = 'bg-green', statusText = r.kehadiran || 'Hadir', rowStyle = '';
+
+                if (isLibur) { badgeClass = 'bg-blue'; statusText = 'Libur'; rowStyle = 'background-color: #eff6ff;'; }
+                else if (isTidakHadir) { badgeClass = 'bg-red'; statusText = 'Tidak Hadir'; rowStyle = 'background-color: #fff1f2;'; }
+                else if (isTerlambat) { badgeClass = 'bg-yellow'; statusText = 'Terlambat'; rowStyle = 'background-color: #fffbeb;'; }
+
+                html += `
+                    <tr style="${rowStyle}">
+                        <td style="text-align:center; padding:5px;">${i + 1}</td>
+                        <td style="text-align:center; padding:5px;">${r.tanggal}</td>
+                        <td style="text-align:center; padding:5px;"><span class="badge ${badgeClass}">${statusText}</span></td>
+                        <td style="text-align:center; padding:5px;">${r.jam_datang || '-'}</td>
+                        <td style="text-align:center; padding:5px;">${r.jam_pulang || '-'}</td>
+                        <td style="font-size:8pt; padding:5px; ${isTidakHadir || isTerlambat ? 'color:#b91c1c; font-weight:bold;' : ''}">
+                            ${r.keterangan || (isLibur ? 'Hari Libur Resmi' : (isTidakHadir ? 'Tidak melakukan absensi' : '-'))}
+                        </td>
+                    </tr>`;
+            });
+
+            html += `</tbody></table></div>`;
+
+        // LAPORAN KOLEKTIF
+        } else {
+            const grouped = filteredData.reduce((acc, curr) => {
+                if (!acc[curr.tanggal]) acc[curr.tanggal] = [];
+                acc[curr.tanggal].push(curr);
+                return acc;
+            }, {});
+
+            const sortedDates = Object.keys(grouped).sort((a, b) => b.split('/').reverse().join('-').localeCompare(a.split('/').reverse().join('-')));
+
+            sortedDates.forEach(tgl => {
+                html += `
+                    <div class="group-tanggal" style="margin-bottom: 25px; background:#fff; padding:15px; border-radius:10px; color: black;">
+                        <div style="text-align: center; border-bottom: 2px solid black; padding-bottom: 8px; margin-bottom: 12px;">
+                            <div style="font-size: 10pt; font-weight: bold;">Rekap E-Absensi GTK - SMK N 1 Kotamobagu</div>
+                            <div style="font-size: 8pt;">Tanggal: ${tgl}</div>
+                        </div>
+
+                        <table border="1" style="width:100%; border-collapse:collapse; font-size: 9pt;">
+                            <thead>
+                                <tr style="background: #f1f5f9;">
+                                    <th width="30">No</th>
+                                    <th>Nama</th>
+                                    <th>Jabatan</th>
+                                    <th>Status</th>
+                                    <th>Masuk</th>
+                                    <th>Pulang</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+
+                grouped[tgl].forEach((r, i) => {
+                    const status = (r.kehadiran || "").toLowerCase().trim();
+                    const ket = (r.keterangan || "").toLowerCase().trim();
+                    const jamDatang = (r.jam_datang || "").trim();
+
+                    const isLibur = globalDaftarLibur.includes(r.tanggal) || status.includes('libur') || ket.includes('libur');
+                    const isTidakHadir = !isLibur && (!jamDatang || jamDatang === '-' || status.includes('tidak hadir') || status.includes('alpa') || status.includes('izin') || status.includes('sakit') || ket.includes('tanpa keterangan'));
+                    const isTerlambat = !isLibur && (status.includes('terlambat') || ket.includes('terlambat'));
+
+                    let badgeClass = 'bg-green', statusText = r.kehadiran || 'Hadir', rowStyle = '';
+
+                    if (isLibur) { badgeClass = 'bg-blue'; statusText = 'Libur'; rowStyle = 'background-color: #eff6ff;'; }
+                    else if (isTidakHadir) { badgeClass = 'bg-red'; statusText = 'Tidak Hadir'; rowStyle = 'background-color: #fff1f2;'; }
+                    else if (isTerlambat) { badgeClass = 'bg-yellow'; statusText = 'Terlambat'; rowStyle = 'background-color: #fffbeb;'; }
+
+                    html += `
+                        <tr style="${rowStyle}">
+                            <td style="text-align:center; padding:5px;">${i + 1}</td>
+                            <td style="font-weight:600; padding:5px; text-align:left;">${r.nama}</td>
+                            <td style="text-align:center; padding:5px;">${r.jabatan}</td>
+                            <td style="text-align:center; padding:5px;"><span class="badge ${badgeClass}">${statusText}</span></td>
+                            <td style="text-align:center; padding:5px;">${r.jam_datang || '-'}</td>
+                            <td style="text-align:center; padding:5px;">${r.jam_pulang || '-'}</td>
+                        </tr>`;
+                });
+
+                html += `</tbody></table></div>`;
+            });
+        }
+
+        html += '</div>';
+        container.innerHTML = html;
+    }
 </script>
 </body>
 </html>
