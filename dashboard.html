@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard GTK - E-Absensi SMK N 1 KTG</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root { 
+      --primary: #1e293b; 
+      --accent: #2563eb;
+      --bg-light: #f1f5f9; 
+      --white: #ffffff; 
+      --success: #22c55e; 
+      --warning: #f59e0b; 
+      --danger: #ef4444;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    body { background: var(--bg-light); color: #1e293b; line-height: 1.6; }
+    
+    .header { background: var(--primary); color: white; padding: 30px 20px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+    .logo-header { width: 70px; height: auto; margin-bottom: 12px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); }
+    .header h1 { font-size: 1.4rem; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 2px; }
+    .header p { font-size: 0.9rem; opacity: 0.9; font-weight: 500; margin-bottom: 2px; }
+    .by-Admin { font-size: 0.75rem; color: #94a3b8; font-weight: 400; letter-spacing: 0.5px; }
+
+    .container { max-width: 1000px; margin: 20px auto; padding: 0 15px; }
+
+    .tab-menu { display: flex; gap: 10px; margin-bottom: 20px; background: #e2e8f0; padding: 5px; border-radius: 12px; }
+    .tab-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.3s; background: none; color: #64748b; font-size: 0.85rem; }
+    .tab-btn.active { background: white; color: var(--accent); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+    .stats-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
+    .stat-card { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-bottom: 4px solid var(--accent); }
+    .stat-card h4 { font-size: 0.75rem; color: #64748b; margin-bottom: 5px; text-transform: uppercase; }
+    .stat-card div { font-size: 1.8rem; font-weight: 700; color: #1e293b; }
+
+    .card-box { background: white; border-radius: 12px; padding: 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; }
+    .card-header h3 { font-size: 1rem; font-weight: 600; }
+
+    .filter-container { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: flex-end; }
+    .filter-item { display: flex; flex-direction: column; gap: 4px; }
+    .filter-item label { font-size: 0.7rem; font-weight: 600; color: #64748b; }
+    input[type="date"] { padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-family: inherit; font-size: 0.85rem; }
+    .btn-cari { padding: 8px 20px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+    .btn-cari:hover { opacity: 0.9; }
+
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; padding: 12px; background: #f8fafc; font-size: 0.75rem; color: #64748b; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; }
+    td { padding: 12px; border-bottom: 1px solid #f1f5f9; font-size: 0.85rem; vertical-align: middle; }
+
+    .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; white-space: nowrap; }
+    .btn-back { display: inline-block; margin-bottom: 15px; text-decoration: none; color: var(--accent); font-weight: 600; font-size: 0.9rem; transition: 0.2s; }
+    .btn-back:hover { text-decoration: underline; }
+    
+    #clock { font-weight: 700; color: var(--accent); }
+    .hidden { display: none; }
+
+    @media (max-width: 600px) {
+      .stats-container { grid-template-columns: 1fr 1fr; }
+      th:nth-child(2), td:nth-child(2) { display: none; }
+      .header h1 { font-size: 1.1rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <input type="hidden" id="user_id_hidden">
+
+  <div class="header">
+    <img src="https://smkn1ktg.sch.id/logo/logo.gif" class="logo-header" alt="Logo SMK N 1 Kotamobagu">
+    <h1>Monitoring & Riwayat Absensi</h1>
+    <p>SMK NEGERI 1 KOTAMOBAGU</p>
+    <div class="by-Admin"> Admin GTK </div>
+  </div>
+
+  <div class="container">
+    <a href="javascript:void(0)" onclick="kembaliKeHome(event)" class="btn-back">← Kembali ke Form Absen</a>
+  
+    <div class="tab-menu">
+      <button id="btnTabRiwayat" class="tab-btn active" onclick="switchTab('riwayat')">Riwayat Saya</button>
+      <button id="btnTabMonitoring" class="tab-btn" onclick="switchTab('monitoring')">Monitoring Hari Ini</button>
+    </div>
+
+    <div id="section-riwayat">
+      <div class="card-box">
+        <div class="card-header">
+          <h3>Riwayat Absensi Saya</h3>
+        </div>
+        
+        <div class="filter-container">
+          <div class="filter-item">
+            <label>Mulai Tanggal</label>
+            <input type="date" id="filterTglMulai">
+          </div>
+          <div class="filter-item">
+            <label>Sampai Tanggal</label>
+            <input type="date" id="filterTglSelesai">
+          </div>
+          <button class="btn-cari" onclick="loadRekap('custom')">Cari Data</button>
+        </div>
+
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Tanggal</th>
+                <th>Pegawai</th> 
+                <th style="text-align:center">Status</th>
+                <th style="text-align:center">Jam Datang</th>
+                <th style="text-align:center">Jam Pulang</th>
+                <th>Keterangan</th>
+              </tr>
+            </thead>
+            <tbody id="rekapTableBody">
+              <tr><td colspan="6" style="text-align:center; padding:30px;">Klik tombol cari untuk memuat data.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="section-monitoring" class="hidden">
+      <div class="stats-container">
+        <div class="stat-card"><h4>Hadir</h4><div id="valHadirCount">0</div></div>
+        <div class="stat-card" style="border-color:var(--danger)"><h4>Terlambat</h4><div id="valLate">0</div></div>
+        <div class="stat-card" style="border-color:var(--warning)"><h4>Pulang Awal</h4><div id="valEarly">0</div></div>
+        <div class="stat-card" style="border-color:#94a3b8"><h4>Waktu</h4><div id="clock">00:00</div></div>
+      </div>
+
+      <div class="card-box">
+        <div class="card-header">
+          <h3>Daftar Kehadiran Pegawai</h3>
+          <small id="lastUpdate" style="color:#94a3b8">Update otomatis...</small>
+        </div>
+        <div style="overflow-x: auto;">
+          <table>
+            <thead>
+              <tr>
+                <th>Nama Pegawai</th>
+                <th>Jabatan</th>
+                <th>Status</th>
+                <th>Jam Datang</th>
+                <th>Jam Pulang</th>
+              </tr>
+            </thead>
+            <tbody id="dashTableBody">
+              <tr><td colspan="5" style="text-align:center; padding:30px;">Memuat data monitoring...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // URL Web App Google Apps Script milik Anda
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx2Tcs8Z3MDqhHSDx6_Y2YIStdqN8WiWnq21mS0odlkZhJ4P_YRNPSziRo9iXkC20Z3/exec"; 
+    const URL_GITHUB_HOME = "https://sukardilahma-cloud.github.io/Absesi-Digital-SMKN-1-KTG/";
+
+    const urlParams = new URLSearchParams(window.location.search);
+    let userId = urlParams.get('id');
+
+    window.onload = () => {
+      if (userId && userId !== "null" && userId !== "") {
+        document.getElementById('user_id_hidden').value = userId;
+        updateClock();
+        loadRekap('bulan'); 
+        setInterval(updateClock, 1000);
+        loadDashboard(); 
+        setInterval(loadDashboard, 30000); 
+      } else {
+        const msg = '<tr><td colspan="6" style="text-align:center; color:red; padding:20px;">⚠️ ID Sesi Tidak Terdeteksi. Silakan Login Kembali dari Form Utama.</td></tr>';
+        document.getElementById('dashTableBody').innerHTML = msg;
+        document.getElementById('rekapTableBody').innerHTML = msg;
+        alert("Sesi login berakhir atau ID tidak ditemukan.");
+      }
+    };
+
+    function switchTab(type) {
+      const secMon = document.getElementById('section-monitoring');
+      const secRiwayat = document.getElementById('section-riwayat');
+      const btnMon = document.getElementById('btnTabMonitoring');
+      const btnRiwayat = document.getElementById('btnTabRiwayat');
+
+      if (type === 'riwayat') {
+        secRiwayat.classList.remove('hidden');
+        secMon.classList.add('hidden');
+        btnRiwayat.classList.add('active');
+        btnMon.classList.remove('active');
+        loadRekap('bulan'); 
+      } else {
+        secMon.classList.remove('hidden');
+        secRiwayat.classList.add('hidden');
+        btnMon.classList.add('active');
+        btnRiwayat.classList.remove('active');
+        loadDashboard();
+      }
+    }
+
+    function updateClock() {
+      const now = new Date();
+      document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
+    }
+
+    // Menggunakan Fetch API untuk mengambil data monitoring dari GAS
+    function loadDashboard() {
+      fetch(`${SCRIPT_URL}?action=getDashboardData`)
+        .then(res => res.json())
+        .then(res => {
+          if (!res) return;
+
+          document.getElementById('valHadirCount').innerText = res.stats.hadir || 0;
+          document.getElementById('valLate').innerText = res.stats.terlambat || 0;
+          document.getElementById('valEarly').innerText = res.stats.pulangAwal || 0;
+          
+          if (document.getElementById('valAbsen')) {
+            document.getElementById('valAbsen').innerText = res.stats.tidakHadir || 0;
+          }
+
+          const tbody = document.getElementById('dashTableBody');
+          if (res.table && res.table.length > 0) {
+            tbody.innerHTML = res.table.map(r => {
+              let badgeStyle = "background:#dcfce7; color:#166534;"; 
+              let statusTeks = r.kehadiran;
+
+              if (r.jam_datang !== "-" && (r.jam_pulang === "-" || !r.jam_pulang)) {
+                badgeStyle = "background:#fef3c7; color:#92400e;"; 
+                statusTeks = "Belum Pulang";
+              } 
+              else if (r.kehadiran === "Terlambat") {
+                badgeStyle = "background:#fef3c7; color:#92400e;";
+              }
+              else if (r.kehadiran === "Tidak Hadir" || r.jam_datang === "-") {
+                badgeStyle = "background:#fee2e2; color:#b91c1c;";
+                statusTeks = "Tidak Hadir";
+              }
+
+              return `<tr>
+                <td>
+                  <div style="font-weight:bold;">${r.nama}</div>
+                  <div style="font-size:0.75rem; color:#64748b;">${r.jabatan}</div>
+                </td>
+                <td style="text-align:center">
+                  <span class="badge" style="${badgeStyle}">
+                    ${statusTeks}
+                  </span>
+                </td>
+                <td style="text-align:center; font-family:monospace; font-weight:bold;">${r.jam_datang || '-'}</td>
+                <td style="text-align:center; font-family:monospace; font-weight:bold;">${r.jam_pulang || '-'}</td>
+                <td style="font-size:0.75rem; color:#64748b;">${r.keterangan || '-'}</td>
+              </tr>`;
+            }).join('');
+          } else {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">😴 Belum ada aktivitas hari ini.</td></tr>';
+          }
+
+          if (document.getElementById('lastUpdate')) {
+            document.getElementById('lastUpdate').innerText = "Update: " + new Date().toLocaleTimeString('id-ID');
+          }
+        })
+        .catch(err => {
+          console.error("Gagal mengambil data dashboard:", err);
+        });
+    }
+
+    // Menggunakan Fetch API untuk mengambil data rekap personal
+    function loadRekap(f) {
+      const filterType = f || 'bulan'; 
+      const activeId = userId || document.getElementById('user_id_hidden').value;
+      if (!activeId || activeId === "null") return;
+
+      const tbody = document.getElementById('rekapTableBody');
+      const tglMulai = document.getElementById('filterTglMulai').value || "";
+      const tglSelesai = document.getElementById('filterTglSelesai').value || "";
+      
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">⏳ Memuat riwayat...</td></tr>';
+
+      fetch(`${SCRIPT_URL}?action=getRekapDataPersonal&filterType=${filterType}&tglMulai=${tglMulai}&tglSelesai=${tglSelesai}&id=${activeId}`)
+        .then(res => res.json())
+        .then(res => {
+          if (res && res.length > 0) {
+            tbody.innerHTML = res.map(r => {
+              let badgeStyle = r.kehadiran === "Terlambat" 
+                ? "background:#fef3c7; color:#92400e;" 
+                : "background:#dcfce7; color:#166534;";
+              let ketStyle = (r.keterangan && r.keterangan.includes("Tidak")) 
+                ? "color:#ef4444; font-weight:bold;" 
+                : "color:#64748b;";
+
+              return `<tr>
+                <td style="font-size:0.85rem; font-weight:600;">${r.tanggal}</td>
+                <td>
+                  <div style="font-weight:600; color:#1e293b;">${r.nama}</div>
+                  <div style="font-size:0.7rem; color:#64748b;">${r.jabatan}</div>
+                </td>
+                <td style="text-align:center"><span class="badge" style="${badgeStyle}">${r.kehadiran}</span></td>
+                <td style="text-align:center; font-family:monospace; font-weight:bold;">${r.jam_datang}</td>
+                <td style="text-align:center; font-family:monospace; font-weight:bold;">${r.jam_pulang}</td>
+                <td style="font-size:0.75rem; ${ketStyle}">${r.keterangan}</td>
+              </tr>`;
+            }).join('');
+          } else {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">📭 Tidak ada aktivitas ditemukan.</td></tr>';
+          }
+        })
+        .catch(err => {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:red;">❌ Gagal memuat data dari server.</td></tr>';
+        });
+    }
+
+    function kembaliKeHome(e) {
+      const btn = e.currentTarget; 
+      btn.innerText = "⏳ Mengalihkan...";
+      window.location.href = URL_GITHUB_HOME;
+    }
+  </script>
+</body>
+</html>
