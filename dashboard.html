@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Dashboard GTK - E-Absensi SMK N 1 KTG</title>
+  <title>Laporan Kehadiran Individu GTK - E-Absensi SMK N 1 KTG</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root { 
@@ -43,8 +43,12 @@
     .filter-item { display: flex; flex-direction: column; gap: 4px; }
     .filter-item label { font-size: 0.7rem; font-weight: 600; color: #64748b; }
     input[type="date"] { padding: 8px; border-radius: 6px; border: 1px solid #cbd5e1; font-family: inherit; font-size: 0.85rem; }
+    
     .btn-cari { padding: 8px 20px; background: var(--accent); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
     .btn-cari:hover { opacity: 0.9; }
+    
+    .btn-cetak { padding: 8px 18px; background: #059669; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+    .btn-cetak:hover { background: #047857; }
 
     table { width: 100%; border-collapse: collapse; }
     th { text-align: left; padding: 12px; background: #f8fafc; font-size: 0.75rem; color: #64748b; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; }
@@ -57,10 +61,40 @@
     #clock { font-weight: 700; color: var(--accent); }
     .hidden { display: none; }
 
-    @media (max-width: 600px) {
-      .stats-container { grid-template-columns: 1fr 1fr; }
-      th:nth-child(2), td:nth-child(2) { display: none; }
-      .header h1 { font-size: 1.1rem; }
+    /* ELEMEN KHUSUS CETAK (DISEMBUNYIKAN DI TAMPILAN WEB LAYAR) */
+    .print-only { display: none; }
+
+    /* ==================== STYLESHEET KHUSUS CETAK PDF / PRINT ==================== */
+    @media print {
+      body { background: white !important; color: black !important; font-family: sans-serif; margin: 0; padding: 0; }
+      
+      /* Sembunyikan Navigasi, Header Web, Tab, Tombol Filter & Kartu Statistik Web */
+      .header, .tab-menu, .btn-back, .filter-container, .stats-container, .btn-cetak, #section-monitoring, .by-Admin { 
+        display: none !important; 
+      }
+      
+      .container { max-width: 100% !important; margin: 0 !important; padding: 0 !important; }
+      .card-box { box-shadow: none !important; border: none !important; padding: 0 !important; margin: 0 !important; }
+      .card-header { display: none !important; }
+
+      /* Tampilkan Header khusus Laporan PDF */
+      .print-only { display: block !important; margin-bottom: 20px; }
+      .print-title { text-align: center; font-weight: bold; font-size: 14pt; margin-bottom: 2px; text-transform: uppercase; }
+      .print-subtitle { text-align: center; font-weight: bold; font-size: 12pt; margin-bottom: 15px; text-transform: uppercase; }
+      
+      .print-meta { margin-bottom: 15px; font-size: 10pt; line-height: 1.5; }
+      .print-meta table { width: 100%; border: none; margin-bottom: 10px; }
+      .print-meta td { padding: 2px 0; border: none; font-size: 10pt; }
+
+      .print-summary { font-weight: bold; margin-bottom: 15px; font-size: 10pt; }
+
+      /* Format Tabel Cetak PDF */
+      table { width: 100% !important; border-collapse: collapse !important; font-size: 9pt !important; }
+      th, td { border: 1px solid #000 !important; padding: 6px 8px !important; color: black !important; text-align: left; }
+      th { background-color: #f2f2f2 !important; font-weight: bold !important; text-align: center !important; }
+      
+      .badge { padding: 0 !important; background: none !important; color: black !important; font-weight: normal !important; text-transform: none !important; }
+      .col-center { text-align: center !important; }
     }
   </style>
 </head>
@@ -68,6 +102,7 @@
 
   <input type="hidden" id="user_id_hidden">
 
+  <!-- HEADER WEB HANYA UNTUK TAMPILAN LAYAR -->
   <div class="header">
     <img src="https://smkn1ktg.sch.id/logo/logo.gif" class="logo-header" alt="Logo SMK N 1 Kotamobagu">
     <h1>Monitoring & Riwayat Absensi</h1>
@@ -83,7 +118,7 @@
       <button id="btnTabMonitoring" class="tab-btn" onclick="switchTab('monitoring')">Monitoring Hari Ini</button>
     </div>
 
-    <!-- KARTU STATISTIK RIWAYAT SAYA -->
+    <!-- KARTU STATISTIK UNTUK TAMPILAN LAYAR WEB -->
     <div class="stats-container">
       <div class="stat-card" style="border-color:var(--success)">
         <h4>Hadir</h4>
@@ -110,8 +145,37 @@
     <!-- TAB 1: RIWAYAT SAYA -->
     <div id="section-riwayat">
       <div class="card-box">
+        
+        <!-- HEADER KOP LAPORAN KHUSUS UNTUK HASIL CETAK / PDF -->
+        <div class="print-only">
+          <div class="print-title">LAPORAN KEHADIRAN INDIVIDU GTK</div>
+          <div class="print-subtitle">SMK NEGERI 1 KOTAMOBAGU</div>
+          
+          <div class="print-meta">
+            <table>
+              <tr>
+                <td style="width: 100px;"><strong>Nama GTK</strong></td>
+                <td style="width: 15px;">:</td>
+                <td id="printNamaGTK">-</td>
+              </tr>
+              <tr>
+                <td><strong>Jabatan</strong></td>
+                <td>:</td>
+                <td id="printJabatanGTK">-</td>
+              </tr>
+            </table>
+          </div>
+
+          <div class="print-summary">
+            Hadir: <span id="printHadir">0</span> &nbsp;&nbsp;&nbsp;&nbsp; 
+            Terlambat: <span id="printTerlambat">0</span> &nbsp;&nbsp;&nbsp;&nbsp; 
+            Tidak Hadir: <span id="printTidakHadir">0</span>
+          </div>
+        </div>
+
         <div class="card-header">
           <h3>Riwayat Absensi Saya</h3>
+          <button class="btn-cetak" onclick="cetakPDF()">🖨️ Cetak PDF</button>
         </div>
         
         <div class="filter-container">
@@ -130,11 +194,11 @@
           <table>
             <thead>
               <tr>
-                <th>Tanggal</th>
-                <th>Pegawai</th> 
-                <th style="text-align:center">Status</th>
-                <th style="text-align:center">Jam Datang</th>
-                <th style="text-align:center">Jam Pulang</th>
+                <th style="width: 40px; text-align: center;">No</th>
+                <th style="text-align: center;">Tanggal</th>
+                <th style="text-align: center;">Status</th>
+                <th style="text-align: center;">Masuk</th>
+                <th style="text-align: center;">Pulang</th>
                 <th>Keterangan</th>
               </tr>
             </thead>
@@ -220,7 +284,6 @@
       document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
     }
 
-    // MEMUAT DAN MENGHITUNG STATISTIK RIWAYAT SAYA
     function loadRekap(f) {
       const filterType = f || 'bulan'; 
       const activeId = userId || document.getElementById('user_id_hidden').value;
@@ -241,7 +304,11 @@
           let countTidakHadir = 0;
 
           if (res && res.length > 0) {
-            // Kalkulasi Kehadiran dari Data Riwayat
+            // Set data profil ke elemen cetak
+            document.getElementById('printNamaGTK').innerText = res[0].nama || "-";
+            document.getElementById('printJabatanGTK').innerText = res[0].jabatan || "-";
+
+            // Kalkulasi Kehadiran
             res.forEach(r => {
               const status = (r.kehadiran || "").toLowerCase();
               const ket = (r.keterangan || "").toLowerCase();
@@ -259,39 +326,45 @@
               }
             });
 
-            // Update Tampilan Kartu Statistik
+            // Update Statistik Tampilan Web
             document.getElementById('valHadirRiwayat').innerText = countHadir;
             document.getElementById('valLateRiwayat').innerText = countTerlambat;
             document.getElementById('valEarlyRiwayat').innerText = countPulangAwal;
             document.getElementById('valAbsenRiwayat').innerText = countTidakHadir;
 
-            // Render Baris Tabel Riwayat
-            tbody.innerHTML = res.map(r => {
+            // Update Statistik Tampilan Cetak PDF
+            document.getElementById('printHadir').innerText = countHadir;
+            document.getElementById('printTerlambat').innerText = countTerlambat;
+            document.getElementById('printTidakHadir').innerText = countTidakHadir;
+
+            // Render Tabel Riwayat Sesuai Format Laporan
+            tbody.innerHTML = res.map((r, i) => {
               let badgeStyle = r.kehadiran === "Terlambat" 
                 ? "background:#fef3c7; color:#92400e;" 
-                : "background:#dcfce7; color:#166534;";
-              let ketStyle = (r.keterangan && r.keterangan.includes("Tidak")) 
-                ? "color:#ef4444; font-weight:bold;" 
-                : "color:#64748b;";
+                : (r.kehadiran === "Tidak Hadir" ? "background:#fee2e2; color:#b91c1c;" : "background:#dcfce7; color:#166534;");
+              
+              let jamDatang = (r.jam_datang && r.jam_datang !== "-") ? r.jam_datang : "";
+              let jamPulang = (r.jam_pulang && r.jam_pulang !== "-") ? r.jam_pulang : "";
 
               return `<tr>
-                <td style="font-size:0.85rem; font-weight:600;">${r.tanggal}</td>
-                <td>
-                  <div style="font-weight:600; color:#1e293b;">${r.nama}</div>
-                  <div style="font-size:0.7rem; color:#64748b;">${r.jabatan}</div>
-                </td>
-                <td style="text-align:center"><span class="badge" style="${badgeStyle}">${r.kehadiran}</span></td>
-                <td style="text-align:center; font-family:monospace; font-weight:bold;">${r.jam_datang}</td>
-                <td style="text-align:center; font-family:monospace; font-weight:bold;">${r.jam_pulang}</td>
-                <td style="font-size:0.75rem; ${ketStyle}">${r.keterangan}</td>
+                <td class="col-center">${i + 1}</td>
+                <td class="col-center" style="font-weight:600;">${r.tanggal}</td>
+                <td class="col-center"><span class="badge" style="${badgeStyle}">${r.kehadiran}</span></td>
+                <td class="col-center" style="font-family:monospace; font-weight:bold;">${jamDatang}</td>
+                <td class="col-center" style="font-family:monospace; font-weight:bold;">${jamPulang}</td>
+                <td>${r.keterangan || '-'}</td>
               </tr>`;
             }).join('');
           } else {
-            // Reset ke 0 jika tidak ada data
+            // Reset Nilai
             document.getElementById('valHadirRiwayat').innerText = "0";
             document.getElementById('valLateRiwayat').innerText = "0";
             document.getElementById('valEarlyRiwayat').innerText = "0";
             document.getElementById('valAbsenRiwayat').innerText = "0";
+
+            document.getElementById('printHadir').innerText = "0";
+            document.getElementById('printTerlambat').innerText = "0";
+            document.getElementById('printTidakHadir').innerText = "0";
 
             tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">📭 Tidak ada riwayat ditemukan.</td></tr>';
           }
@@ -334,6 +407,11 @@
             }).join('');
           }
         });
+    }
+
+    // FUNGSI UNTUK MEMICU PENCETAKAN PDF
+    function cetakPDF() {
+      window.print();
     }
 
     function kembaliKeHome(e) {
