@@ -534,162 +534,198 @@
     }
 
     function renderTabelRekap(data) {
-      const container = document.getElementById('container-rekap-hasil');
-      const selectedGtk = document.getElementById('filterGtkSelect') ? document.getElementById('filterGtkSelect').value : '';
+  const container = document.getElementById('container-rekap-hasil');
+  const selectedGtk = document.getElementById('filterGtkSelect') ? document.getElementById('filterGtkSelect').value : '';
 
-      if (!data || data.length === 0) {
-        container.innerHTML = '<div style="text-align:center; padding:20px;">📭 Tidak ada data ditemukan.</div>';
-        return;
+  if (!data || data.length === 0) {
+    container.innerHTML = '<div style="text-align:center; padding:20px;">📭 Tidak ada data ditemukan.</div>';
+    return;
+  }
+
+  // Filter data jika GTK tertentu dipilih
+  let filteredData = data;
+  if (selectedGtk) {
+    filteredData = data.filter(d => d.nama === selectedGtk);
+  }
+
+  if (filteredData.length === 0) {
+    container.innerHTML = '<div style="text-align:center; padding:20px;">📭 Tidak ada data untuk GTK yang dipilih.</div>';
+    return;
+  }
+
+  let html = '<div id="rekapPrintArea">';
+
+  // CETAK PER NAMA GTK INDIVIDU
+  if (selectedGtk) {
+    const gtkInfo = filteredData[0];
+    
+    let totalHadir = 0;
+    let totalTerlambat = 0;
+    let totalTidakHadir = 0;
+
+    // Kalkulasi presisi status & keterangan
+    filteredData.forEach(r => {
+      const status = (r.kehadiran || "").toLowerCase().trim();
+      const ket = (r.keterangan || "").toLowerCase().trim();
+      const jamDatang = (r.jam_datang || "").trim();
+
+      const isTidakHadir = !jamDatang || jamDatang === '-' || status.includes('tidak hadir') || status.includes('alpa') || status.includes('izin') || status.includes('sakit') || ket.includes('tanpa keterangan');
+      const isTerlambat = status.includes('terlambat') || ket.includes('terlambat');
+
+      if (isTidakHadir) {
+        totalTidakHadir++;
+      } else if (isTerlambat) {
+        totalTerlambat++;
+        totalHadir++; // Terlambat tetap dihitung masuk/hadir secara fisik
+      } else {
+        totalHadir++;
+      }
+    });
+
+    html += `
+      <div class="group-gtk" style="color: black; margin-bottom: 30px;">
+        <div class="kop-surat" style="text-align: center; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 15px;">
+          <img src="https://smkn1ktg.sch.id/logo/logo.gif" style="width: 50px; height: auto; margin-bottom: 5px;">
+          <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase;">Laporan Kehadiran Individu GTK</div>
+          <div style="font-size: 12pt; font-weight: bold; text-transform: uppercase;">SMK Negeri 1 Kotamobagu</div>
+        </div>
+
+       <table style="width:100%; margin-bottom:15px; font-size:10pt; border:none;">
+         <tr><td width="120"><b>Nama GTK</b></td><td width="10">:</td><td>${gtkInfo.nama}</td></tr>
+         <tr><td><b>Jabatan</b></td><td>:</td><td>${gtkInfo.jabatan}</td></tr>
+        </table>
+
+        <div style="display:flex; gap:10px; margin-bottom:15px; font-size:9pt;">
+          <div style="padding:6px 12px; background:#dcfce7; border:1px solid #16a34a; border-radius:4px;">Total Hadir: <b>${totalHadir}</b></div>
+          <div style="padding:6px 12px; background:#fef3c7; border:1px solid #d97706; border-radius:4px;">Terlambat: <b>${totalTerlambat}</b></div>
+          <div style="padding:6px 12px; background:#fee2e2; border:1px solid #dc2626; border-radius:4px;">Tidak Hadir: <b>${totalTidakHadir}</b></div>
+        </div>
+
+        <table border="1" style="width:100%; border-collapse:collapse; font-size: 10pt;">
+          <thead>
+            <tr style="background: #f1f5f9;">
+              <th width="40" style="padding:8px;">No</th>
+              <th width="100" style="padding:8px;">Tanggal</th>
+              <th width="120" style="padding:8px;">Status</th>
+              <th width="80" style="padding:8px;">Masuk</th>
+              <th width="80" style="padding:8px;">Pulang</th>
+              <th style="padding:8px;">Keterangan</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+    filteredData.forEach((r, i) => {
+      const status = (r.kehadiran || "").toLowerCase().trim();
+      const ket = (r.keterangan || "").toLowerCase().trim();
+      const jamDatang = (r.jam_datang || "").trim();
+
+      const isTidakHadir = !jamDatang || jamDatang === '-' || status.includes('tidak hadir') || status.includes('alpa') || status.includes('izin') || status.includes('sakit') || ket.includes('tanpa keterangan');
+      const isTerlambat = status.includes('terlambat') || ket.includes('terlambat');
+
+      let badgeClass = 'bg-green';
+      let statusText = r.kehadiran || 'Hadir';
+
+      if (isTidakHadir) {
+        badgeClass = 'bg-red';
+        statusText = 'Tidak Hadir';
+      } else if (isTerlambat) {
+        badgeClass = 'bg-red'; // Menggunakan warna peringatan merah/kuning untuk terlambat
+        statusText = 'Terlambat';
       }
 
-      // Filter data jika GTK tertentu dipilih
-      let filteredData = data;
-      if (selectedGtk) {
-        filteredData = data.filter(d => d.nama === selectedGtk);
-      }
+      html += `
+        <tr style="${isTidakHadir ? 'background-color: #fff1f2;' : (isTerlambat ? 'background-color: #fffbeb;' : '')}">
+          <td style="text-align:center; padding:5px;">${i + 1}</td>
+          <td style="text-align:center; padding:5px;">${r.tanggal}</td>
+          <td style="text-align:center; padding:5px;"><span class="badge ${badgeClass}">${statusText}</span></td>
+          <td style="text-align:center; padding:5px;">${r.jam_datang || '-'}</td>
+          <td style="text-align:center; padding:5px;">${r.jam_pulang || '-'}</td>
+          <td style="font-size:8pt; padding:5px; ${isTidakHadir || isTerlambat ? 'color:#b91c1c; font-weight:bold;' : ''}">
+            ${r.keterangan || (isTidakHadir ? 'Tidak melakukan absensi' : '-')}
+          </td>
+        </tr>`;
+    });
 
-      if (filteredData.length === 0) {
-        container.innerHTML = '<div style="text-align:center; padding:20px;">📭 Tidak ada data untuk GTK yang dipilih.</div>';
-        return;
-      }
+    html += `</tbody></table></div>`;
 
-      let html = '<div id="rekapPrintArea">';
+  } else {
+    // REKAP KOLEKTIF SEMUA GTK PER TANGGAL
+    const grouped = filteredData.reduce((acc, curr) => {
+      if (!acc[curr.tanggal]) acc[curr.tanggal] = [];
+      acc[curr.tanggal].push(curr);
+      return acc;
+    }, {});
 
-      // CETAK PER NAMA GTK INDIVIDU
-      if (selectedGtk) {
-        const gtkInfo = filteredData[0];
-        
-        let totalHadir = 0;
-        let totalTerlambat = 0;
-        let totalTidakHadir = 0;
+    const sortedDates = Object.keys(grouped).sort((a, b) => {
+      const d1 = a.split('/').reverse().join('-');
+      const d2 = b.split('/').reverse().join('-');
+      return d2.localeCompare(d1);
+    });
 
-        filteredData.forEach(r => {
-          const isTidakHadir = !r.jam_datang || r.jam_datang === '-' || (r.kehadiran && r.kehadiran.toLowerCase().includes('tidak hadir'));
-          if (isTidakHadir) {
-            totalTidakHadir++;
-          } else if (r.kehadiran && r.kehadiran.toLowerCase().includes('terlambat')) {
-            totalTerlambat++;
-          } else {
-            totalHadir++;
-          }
-        });
+    sortedDates.forEach(tgl => {
+      html += `
+        <div class="group-tanggal" style="margin-bottom: 50px; page-break-after: always; color: black;">
+          <div class="kop-surat" style="text-align: center; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 15px;">
+            <img src="https://smkn1ktg.sch.id/logo/logo.gif" style="width: 50px; height: auto; margin-bottom: 5px;">
+            <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase;">Rekap E-Absensi GTK</div>
+            <div style="font-size: 12pt; font-weight: bold; text-transform: uppercase;">SMK Negeri 1 Kotamobagu</div>
+            <div style="font-size: 9pt; font-weight: normal;">Tanggal Laporan: ${tgl}</div>
+          </div>
+
+          <table border="1" style="width:100%; border-collapse:collapse; font-size: 10pt;">
+            <thead>
+              <tr style="background: #f1f5f9;">
+                <th width="40" style="padding:8px;">No</th>
+                <th style="padding:8px;">Nama</th>
+                <th width="120" style="padding:8px;">Jabatan</th>
+                <th width="110" style="padding:8px;">Status</th>
+                <th width="80" style="padding:8px;">Masuk</th>
+                <th width="80" style="padding:8px;">Pulang</th>
+                <th style="padding:8px;">Keterangan</th>
+              </tr>
+            </thead>
+            <tbody>`;
+
+      grouped[tgl].forEach((r, i) => {
+        const status = (r.kehadiran || "").toLowerCase().trim();
+        const ket = (r.keterangan || "").toLowerCase().trim();
+        const jamDatang = (r.jam_datang || "").trim();
+
+        const isTidakHadir = !jamDatang || jamDatang === '-' || status.includes('tidak hadir') || status.includes('alpa') || status.includes('izin') || status.includes('sakit') || ket.includes('tanpa keterangan');
+        const isTerlambat = status.includes('terlambat') || ket.includes('terlambat');
+
+        let badgeClass = 'bg-green';
+        let statusText = r.kehadiran || 'Hadir';
+
+        if (isTidakHadir) {
+          badgeClass = 'bg-red';
+          statusText = 'Tidak Hadir';
+        } else if (isTerlambat) {
+          badgeClass = 'bg-red';
+          statusText = 'Terlambat';
+        }
 
         html += `
-          <div class="group-gtk" style="color: black; margin-bottom: 30px;">
-            <div class="kop-surat" style="text-align: center; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 15px;">
-              <img src="https://smkn1ktg.sch.id/logo/logo.gif" style="width: 50px; height: auto; margin-bottom: 5px;">
-              <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase;">Laporan Kehadiran Individu GTK</div>
-              <div style="font-size: 12pt; font-weight: bold; text-transform: uppercase;">SMK Negeri 1 Kotamobagu</div>
-            </div>
+          <tr style="${isTidakHadir ? 'background-color: #fff1f2;' : (isTerlambat ? 'background-color: #fffbeb;' : '')}">
+            <td style="text-align:center; padding:5px;">${i + 1}</td>
+            <td style="font-weight:600; padding:5px;">${r.nama}</td>
+            <td style="text-align:center; padding:5px;">${r.jabatan}</td>
+            <td style="text-align:center; padding:5px;"><span class="badge ${badgeClass}">${statusText}</span></td>
+            <td style="text-align:center; padding:5px;">${r.jam_datang || '-'}</td>
+            <td style="text-align:center; padding:5px;">${r.jam_pulang || '-'}</td>
+            <td style="font-size:8pt; padding:5px; ${isTidakHadir || isTerlambat ? 'color:#b91c1c; font-weight:bold;' : ''}">
+              ${r.keterangan || (isTidakHadir ? 'Tidak melakukan absensi' : '-')}
+            </td>
+          </tr>`;
+      });
 
-           <table style="width:100%; margin-bottom:15px; font-size:10pt; border:none;">
-             <tr><td width="120"><b>Nama GTK</b></td><td width="10">:</td><td>${gtkInfo.nama}</td></tr>
-             <tr><td><b>Jabatan</b></td><td>:</td><td>${gtkInfo.jabatan}</td></tr>
-            </table>
+      html += `</tbody></table></div>`;
+    });
+  }
 
-            <div style="display:flex; gap:10px; margin-bottom:15px; font-size:9pt;">
-              <div style="padding:6px 12px; background:#dcfce7; border:1px solid #16a34a; border-radius:4px;">Hadir: <b>${totalHadir}</b></div>
-              <div style="padding:6px 12px; background:#fef3c7; border:1px solid #d97706; border-radius:4px;">Terlambat: <b>${totalTerlambat}</b></div>
-              <div style="padding:6px 12px; background:#fee2e2; border:1px solid #dc2626; border-radius:4px;">Tidak Hadir: <b>${totalTidakHadir}</b></div>
-            </div>
-
-            <table border="1" style="width:100%; border-collapse:collapse; font-size: 10pt;">
-              <thead>
-                <tr style="background: #f1f5f9;">
-                  <th width="40" style="padding:8px;">No</th>
-                  <th width="100" style="padding:8px;">Tanggal</th>
-                  <th width="110" style="padding:8px;">Status</th>
-                  <th width="80" style="padding:8px;">Masuk</th>
-                  <th width="80" style="padding:8px;">Pulang</th>
-                  <th style="padding:8px;">Keterangan</th>
-                </tr>
-              </thead>
-              <tbody>`;
-
-        filteredData.forEach((r, i) => {
-          const isTidakHadir = !r.jam_datang || r.jam_datang === '-' || (r.kehadiran && r.kehadiran.toLowerCase().includes('tidak hadir'));
-          const badgeClass = isTidakHadir ? 'bg-red' : 'bg-green';
-          const statusText = isTidakHadir ? 'Tidak Hadir' : (r.kehadiran || 'Hadir');
-
-          html += `
-            <tr style="${isTidakHadir ? 'background-color: #fff1f2;' : ''}">
-              <td style="text-align:center; padding:5px;">${i + 1}</td>
-              <td style="text-align:center; padding:5px;">${r.tanggal}</td>
-              <td style="text-align:center; padding:5px;"><span class="badge ${badgeClass}">${statusText}</span></td>
-              <td style="text-align:center; padding:5px;">${r.jam_datang || '-'}</td>
-              <td style="text-align:center; padding:5px;">${r.jam_pulang || '-'}</td>
-              <td style="font-size:8pt; padding:5px; ${isTidakHadir ? 'color:#b91c1c; font-weight:bold;' : ''}">
-                ${r.keterangan || (isTidakHadir ? 'Tidak melakukan absensi' : '-')}
-              </td>
-            </tr>`;
-        });
-
-        html += `</tbody></table></div>`;
-
-      } else {
-        // REKAP KOLEKTIF SEMUA GTK PER TANGGAL
-        const grouped = filteredData.reduce((acc, curr) => {
-          if (!acc[curr.tanggal]) acc[curr.tanggal] = [];
-          acc[curr.tanggal].push(curr);
-          return acc;
-        }, {});
-
-        const sortedDates = Object.keys(grouped).sort((a, b) => {
-          const d1 = a.split('/').reverse().join('-');
-          const d2 = b.split('/').reverse().join('-');
-          return d2.localeCompare(d1);
-        });
-
-        sortedDates.forEach(tgl => {
-          html += `
-            <div class="group-tanggal" style="margin-bottom: 50px; page-break-after: always; color: black;">
-              <div class="kop-surat" style="text-align: center; border-bottom: 2px solid black; padding-bottom: 10px; margin-bottom: 15px;">
-                <img src="https://smkn1ktg.sch.id/logo/logo.gif" style="width: 50px; height: auto; margin-bottom: 5px;">
-                <div style="font-size: 11pt; font-weight: bold; text-transform: uppercase;">Rekap E-Absensi GTK</div>
-                <div style="font-size: 12pt; font-weight: bold; text-transform: uppercase;">SMK Negeri 1 Kotamobagu</div>
-                <div style="font-size: 9pt; font-weight: normal;">Tanggal Laporan: ${tgl}</div>
-              </div>
-
-              <table border="1" style="width:100%; border-collapse:collapse; font-size: 10pt;">
-                <thead>
-                  <tr style="background: #f1f5f9;">
-                    <th width="40" style="padding:8px;">No</th>
-                    <th style="padding:8px;">Nama</th>
-                    <th width="120" style="padding:8px;">Jabatan</th>
-                    <th width="110" style="padding:8px;">Status</th>
-                    <th width="80" style="padding:8px;">Masuk</th>
-                    <th width="80" style="padding:8px;">Pulang</th>
-                    <th style="padding:8px;">Keterangan</th>
-                  </tr>
-                </thead>
-                <tbody>`;
-
-          grouped[tgl].forEach((r, i) => {
-            const isTidakHadir = !r.jam_datang || r.jam_datang === '-' || (r.kehadiran && r.kehadiran.toLowerCase().includes('tidak hadir'));
-            const badgeClass = isTidakHadir ? 'bg-red' : 'bg-green';
-            const statusText = isTidakHadir ? 'Tidak Hadir' : (r.kehadiran || 'Hadir');
-
-            html += `
-              <tr style="${isTidakHadir ? 'background-color: #fff1f2;' : ''}">
-                <td style="text-align:center; padding:5px;">${i + 1}</td>
-                <td style="font-weight:600; padding:5px;">${r.nama}</td>
-                <td style="text-align:center; padding:5px;">${r.jabatan}</td>
-                <td style="text-align:center; padding:5px;"><span class="badge ${badgeClass}">${statusText}</span></td>
-                <td style="text-align:center; padding:5px;">${r.jam_datang || '-'}</td>
-                <td style="text-align:center; padding:5px;">${r.jam_pulang || '-'}</td>
-                <td style="font-size:8pt; padding:5px; ${isTidakHadir ? 'color:#b91c1c; font-weight:bold;' : ''}">
-                  ${r.keterangan || (isTidakHadir ? 'Tidak melakukan absensi' : '-')}
-                </td>
-              </tr>`;
-          });
-
-          html += `</tbody></table></div>`;
-        });
-      }
-
-      html += '</div>';
-      container.innerHTML = html;
-    }
+  html += '</div>';
+  container.innerHTML = html;
+}
 
     function exportExcel() {
   const data = window.dataRekapTerakhir;
