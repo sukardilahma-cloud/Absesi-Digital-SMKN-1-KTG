@@ -290,30 +290,95 @@
   if (!activeId || activeId === "null") return;
 
   const tbody = document.getElementById('rekapTableBody');
-  const tglMulai = document.getElementById('filterTglMulai').value || "";
-  const tglSelesai = document.getElementById('filterTglSelesai').value || "";
+  let inputMulai = document.getElementById('filterTglMulai').value;
+  let inputSelesai = document.getElementById('filterTglSelesai').value;
   
   tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">⏳ Memuat riwayat...</td></tr>';
 
-  fetch(`${SCRIPT_URL}?action=getRekapDataPersonal&filterType=${filterType}&tglMulai=${tglMulai}&tglSelesai=${tglSelesai}&id=${activeId}`)
+  fetch(`${SCRIPT_URL}?action=getRekapDataPersonal&filterType=${filterType}&tglMulai=${inputMulai}&tglSelesai=${inputSelesai}&id=${activeId}`)
     .then(res => res.json())
     .then(res => {
+      // 1. Tentukan Rentang Tanggal yang Akan Dihitung
+      let startDate, endDate;
+      const today = new Date();
+
+      if (inputMulai && inputSelesai) {
+        startDate = new Date(inputMulai);
+        endDate = new Date(inputSelesai);
+      } else {
+        // Default: Dari tanggal 1 bulan ini sampai hari ini
+        startDate = new Date(today.getFullYear(), today.getMonth(), 1);
+        endDate = new Date(today);
+      }
+
+      // 2. Petakan Data Absen yang Diterima dari Apps Script Berdasarkan Tanggal (DD/MM/YYYY)
+      const absensiMap = {};
+      let namaGTK = "-";
+      let jabatanGTK = "-";
+
+      if (res && res.length > 0) {
+        namaGTK = res[0].nama || "-";
+        jabatanGTK = res[0].jabatan || "-";
+
+        res.forEach(item => {
+          if (item.tanggal) {
+            // Normalisasi format tanggal key ke DD/MM/YYYY
+            const parts = item.tanggal.split('/');
+            if (parts.length === 3) {
+              const formattedKey = `${parts[0].padStart(2, '0')}/${parts[1].padStart(2, '0')}/${parts[2]}`;
+              absensiMap[formattedKey] = item;
+            } else {
+              absensiMap[item.tanggal] = item;
+            }
+          }
+        });
+      }
+
+      document.getElementById('printNamaGTK').innerText = namaGTK;
+      document.getElementById('printJabatanGTK').innerText = jabatanGTK;
+
+      // 3. Generate Seluruh Tanggal Kerja (Senin - Jumat) & Gabungkan Data
+      const fullList = [];
+      let curDate = new Date(startDate);
+
+      while (curDate <= endDate) {
+        const dayOfWeek = curDate.getDay();
+        
+        // Hanya hitung hari kerja (1 = Senin, 5 = Jumat). Sabtu (6) & Minggu (0) dilewati.
+        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+          const dd = String(curDate.getDate()).padStart(2, '0');
+          const mm = String(curDate.getMonth() + 1).padStart(2, '0');
+          const yyyy = curDate.getFullYear();
+          const tglKey = `${dd}/${mm}/${yyyy}`;
+
+          if (absensiMap[tglKey]) {
+            // Pegawai memiliki catatan di database
+            fullList.push(absensiMap[tglKey]);
+          } else {
+            // Pegawai TIDAK ABSEN pada tanggal kerja ini -> Otomatis Set "Tidak Hadir"
+            fullList.push({
+              tanggal: tglKey,
+              kehadiran: "Tidak Hadir",
+              jam_datang: "-",
+              jam_pulang: "-",
+              keterangan: "Tanpa Keterangan / Belum Absen"
+            });
+          }
+        }
+        curDate.setDate(curDate.getDate() + 1);
+      }
+
+      // 4. Hitung Statistik & Render Tabel
       let countHadir = 0;
       let countTerlambat = 0;
       let countPulangAwal = 0;
       let countTidakHadir = 0;
 
-      if (res && res.length > 0) {
-        // Set data profil ke elemen cetak
-        document.getElementById('printNamaGTK').innerText = res[0].nama || "-";
-        document.getElementById('printJabatanGTK').innerText = res[0].jabatan || "-";
-
-        // Kalkulasi Kehadiran & Tidak Hadir secara Presisi
-        res.forEach(r => {
+      if (fullList.length > 0) {
+        fullList.forEach(r => {
           const status = (r.kehadiran || "").toLowerCase().trim();
           const ket = (r.keterangan || "").toLowerCase().trim();
 
-          // Cek kondisi Tidak Hadir / Belum Absen / Alpa / Izin / Sakit
           if (
             status.includes("tidak") || 
             status.includes("alpa") || 
@@ -323,43 +388,38 @@
             ket.includes("belum absen")
           ) {
             countTidakHadir++;
-          } 
-          // Cek kondisi Terlambat (Pegawai tetap dihitung HADIR)
-          else if (status.includes("terlambat") || ket.includes("terlambat")) {
+          } else if (status.includes("terlambat") || ket.includes("terlambat")) {
             countHadir++;
             countTerlambat++;
-          } 
-          // Cek kondisi Hadir / Tepat Waktu
-          else if (status.includes("hadir") || status.includes("tepat waktu")) {
+          } else if (status.includes("hadir") || status.includes("tepat waktu")) {
             countHadir++;
           }
 
-          // Cek kondisi Pulang Awal
           if (ket.includes("pulang awal") || ket.includes("cepat pulang")) {
             countPulangAwal++;
           }
         });
 
-        // Update Statistik Tampilan Web
+        // Update Statistik Web
         document.getElementById('valHadirRiwayat').innerText = countHadir;
         document.getElementById('valLateRiwayat').innerText = countTerlambat;
         document.getElementById('valEarlyRiwayat').innerText = countPulangAwal;
         document.getElementById('valAbsenRiwayat').innerText = countTidakHadir;
 
-        // Update Statistik Tampilan Cetak PDF
+        // Update Statistik Cetak PDF
         document.getElementById('printHadir').innerText = countHadir;
         document.getElementById('printTerlambat').innerText = countTerlambat;
         document.getElementById('printTidakHadir').innerText = countTidakHadir;
 
-        // Render Tabel Riwayat Sesuai Format Laporan
-        tbody.innerHTML = res.map((r, i) => {
+        // Render Baris Tabel
+        tbody.innerHTML = fullList.map((r, i) => {
           const st = (r.kehadiran || "").toLowerCase();
           const kt = (r.keterangan || "").toLowerCase();
           
-          let badgeStyle = "background:#dcfce7; color:#166534;"; // Default Hadir (Hijau)
+          let badgeStyle = "background:#dcfce7; color:#166534;"; // Hijau (Hadir)
 
           if (st.includes("terlambat") || kt.includes("terlambat")) {
-            badgeStyle = "background:#fef3c7; color:#92400e;"; // Terlambat (Kuning)
+            badgeStyle = "background:#fef3c7; color:#92400e;"; // Kuning (Terlambat)
           } else if (
             st.includes("tidak") || 
             st.includes("alpa") || 
@@ -367,7 +427,7 @@
             st.includes("sakit") || 
             kt.includes("tanpa keterangan")
           ) {
-            badgeStyle = "background:#fee2e2; color:#b91c1c;"; // Tidak Hadir (Merah)
+            badgeStyle = "background:#fee2e2; color:#b91c1c;"; // Merah (Tidak Hadir)
           }
           
           let jamDatang = (r.jam_datang && r.jam_datang !== "-") ? r.jam_datang : "";
@@ -383,7 +443,6 @@
           </tr>`;
         }).join('');
       } else {
-        // Reset Nilai jika data kosong
         document.getElementById('valHadirRiwayat').innerText = "0";
         document.getElementById('valLateRiwayat').innerText = "0";
         document.getElementById('valEarlyRiwayat').innerText = "0";
@@ -397,10 +456,10 @@
       }
     })
     .catch(err => {
+      console.error(err);
       tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:red;">❌ Gagal memuat data riwayat dari server.</td></tr>';
     });
 }
-
     function loadDashboard() {
       fetch(`${SCRIPT_URL}?action=getDashboardData`)
         .then(res => res.json())
