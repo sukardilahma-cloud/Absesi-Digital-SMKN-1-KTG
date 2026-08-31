@@ -285,94 +285,121 @@
     }
 
     function loadRekap(f) {
-      const filterType = f || 'bulan'; 
-      const activeId = userId || document.getElementById('user_id_hidden').value;
-      if (!activeId || activeId === "null") return;
+  const filterType = f || 'bulan'; 
+  const activeId = userId || document.getElementById('user_id_hidden').value;
+  if (!activeId || activeId === "null") return;
 
-      const tbody = document.getElementById('rekapTableBody');
-      const tglMulai = document.getElementById('filterTglMulai').value || "";
-      const tglSelesai = document.getElementById('filterTglSelesai').value || "";
-      
-      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">⏳ Memuat riwayat...</td></tr>';
+  const tbody = document.getElementById('rekapTableBody');
+  const tglMulai = document.getElementById('filterTglMulai').value || "";
+  const tglSelesai = document.getElementById('filterTglSelesai').value || "";
+  
+  tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">⏳ Memuat riwayat...</td></tr>';
 
-      fetch(`${SCRIPT_URL}?action=getRekapDataPersonal&filterType=${filterType}&tglMulai=${tglMulai}&tglSelesai=${tglSelesai}&id=${activeId}`)
-        .then(res => res.json())
-        .then(res => {
-          let countHadir = 0;
-          let countTerlambat = 0;
-          let countPulangAwal = 0;
-          let countTidakHadir = 0;
+  fetch(`${SCRIPT_URL}?action=getRekapDataPersonal&filterType=${filterType}&tglMulai=${tglMulai}&tglSelesai=${tglSelesai}&id=${activeId}`)
+    .then(res => res.json())
+    .then(res => {
+      let countHadir = 0;
+      let countTerlambat = 0;
+      let countPulangAwal = 0;
+      let countTidakHadir = 0;
 
-          if (res && res.length > 0) {
-            // Set data profil ke elemen cetak
-            document.getElementById('printNamaGTK').innerText = res[0].nama || "-";
-            document.getElementById('printJabatanGTK').innerText = res[0].jabatan || "-";
+      if (res && res.length > 0) {
+        // Set data profil ke elemen cetak
+        document.getElementById('printNamaGTK').innerText = res[0].nama || "-";
+        document.getElementById('printJabatanGTK').innerText = res[0].jabatan || "-";
 
-            // Kalkulasi Kehadiran
-            res.forEach(r => {
-              const status = (r.kehadiran || "").toLowerCase();
-              const ket = (r.keterangan || "").toLowerCase();
+        // Kalkulasi Kehadiran & Tidak Hadir secara Presisi
+        res.forEach(r => {
+          const status = (r.kehadiran || "").toLowerCase().trim();
+          const ket = (r.keterangan || "").toLowerCase().trim();
 
-              if (status.includes("terlambat") || ket.includes("terlambat")) {
-                countTerlambat++;
-              } else if (status.includes("hadir") || status.includes("tepat waktu")) {
-                countHadir++;
-              } else if (status.includes("tidak") || status.includes("alpa") || status.includes("izin") || status.includes("sakit")) {
-                countTidakHadir++;
-              }
-
-              if (ket.includes("pulang awal") || ket.includes("cepat pulang")) {
-                countPulangAwal++;
-              }
-            });
-
-            // Update Statistik Tampilan Web
-            document.getElementById('valHadirRiwayat').innerText = countHadir;
-            document.getElementById('valLateRiwayat').innerText = countTerlambat;
-            document.getElementById('valEarlyRiwayat').innerText = countPulangAwal;
-            document.getElementById('valAbsenRiwayat').innerText = countTidakHadir;
-
-            // Update Statistik Tampilan Cetak PDF
-            document.getElementById('printHadir').innerText = countHadir;
-            document.getElementById('printTerlambat').innerText = countTerlambat;
-            document.getElementById('printTidakHadir').innerText = countTidakHadir;
-
-            // Render Tabel Riwayat Sesuai Format Laporan
-            tbody.innerHTML = res.map((r, i) => {
-              let badgeStyle = r.kehadiran === "Terlambat" 
-                ? "background:#fef3c7; color:#92400e;" 
-                : (r.kehadiran === "Tidak Hadir" ? "background:#fee2e2; color:#b91c1c;" : "background:#dcfce7; color:#166534;");
-              
-              let jamDatang = (r.jam_datang && r.jam_datang !== "-") ? r.jam_datang : "";
-              let jamPulang = (r.jam_pulang && r.jam_pulang !== "-") ? r.jam_pulang : "";
-
-              return `<tr>
-                <td class="col-center">${i + 1}</td>
-                <td class="col-center" style="font-weight:600;">${r.tanggal}</td>
-                <td class="col-center"><span class="badge" style="${badgeStyle}">${r.kehadiran}</span></td>
-                <td class="col-center" style="font-family:monospace; font-weight:bold;">${jamDatang}</td>
-                <td class="col-center" style="font-family:monospace; font-weight:bold;">${jamPulang}</td>
-                <td>${r.keterangan || '-'}</td>
-              </tr>`;
-            }).join('');
-          } else {
-            // Reset Nilai
-            document.getElementById('valHadirRiwayat').innerText = "0";
-            document.getElementById('valLateRiwayat').innerText = "0";
-            document.getElementById('valEarlyRiwayat').innerText = "0";
-            document.getElementById('valAbsenRiwayat').innerText = "0";
-
-            document.getElementById('printHadir').innerText = "0";
-            document.getElementById('printTerlambat').innerText = "0";
-            document.getElementById('printTidakHadir').innerText = "0";
-
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">📭 Tidak ada riwayat ditemukan.</td></tr>';
+          // Cek kondisi Tidak Hadir / Belum Absen / Alpa / Izin / Sakit
+          if (
+            status.includes("tidak") || 
+            status.includes("alpa") || 
+            status.includes("izin") || 
+            status.includes("sakit") ||
+            ket.includes("tanpa keterangan") ||
+            ket.includes("belum absen")
+          ) {
+            countTidakHadir++;
+          } 
+          // Cek kondisi Terlambat (Pegawai tetap dihitung HADIR)
+          else if (status.includes("terlambat") || ket.includes("terlambat")) {
+            countHadir++;
+            countTerlambat++;
+          } 
+          // Cek kondisi Hadir / Tepat Waktu
+          else if (status.includes("hadir") || status.includes("tepat waktu")) {
+            countHadir++;
           }
-        })
-        .catch(err => {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:red;">❌ Gagal memuat data riwayat dari server.</td></tr>';
+
+          // Cek kondisi Pulang Awal
+          if (ket.includes("pulang awal") || ket.includes("cepat pulang")) {
+            countPulangAwal++;
+          }
         });
-    }
+
+        // Update Statistik Tampilan Web
+        document.getElementById('valHadirRiwayat').innerText = countHadir;
+        document.getElementById('valLateRiwayat').innerText = countTerlambat;
+        document.getElementById('valEarlyRiwayat').innerText = countPulangAwal;
+        document.getElementById('valAbsenRiwayat').innerText = countTidakHadir;
+
+        // Update Statistik Tampilan Cetak PDF
+        document.getElementById('printHadir').innerText = countHadir;
+        document.getElementById('printTerlambat').innerText = countTerlambat;
+        document.getElementById('printTidakHadir').innerText = countTidakHadir;
+
+        // Render Tabel Riwayat Sesuai Format Laporan
+        tbody.innerHTML = res.map((r, i) => {
+          const st = (r.kehadiran || "").toLowerCase();
+          const kt = (r.keterangan || "").toLowerCase();
+          
+          let badgeStyle = "background:#dcfce7; color:#166534;"; // Default Hadir (Hijau)
+
+          if (st.includes("terlambat") || kt.includes("terlambat")) {
+            badgeStyle = "background:#fef3c7; color:#92400e;"; // Terlambat (Kuning)
+          } else if (
+            st.includes("tidak") || 
+            st.includes("alpa") || 
+            st.includes("izin") || 
+            st.includes("sakit") || 
+            kt.includes("tanpa keterangan")
+          ) {
+            badgeStyle = "background:#fee2e2; color:#b91c1c;"; // Tidak Hadir (Merah)
+          }
+          
+          let jamDatang = (r.jam_datang && r.jam_datang !== "-") ? r.jam_datang : "";
+          let jamPulang = (r.jam_pulang && r.jam_pulang !== "-") ? r.jam_pulang : "";
+
+          return `<tr>
+            <td class="col-center">${i + 1}</td>
+            <td class="col-center" style="font-weight:600;">${r.tanggal}</td>
+            <td class="col-center"><span class="badge" style="${badgeStyle}">${r.kehadiran}</span></td>
+            <td class="col-center" style="font-family:monospace; font-weight:bold;">${jamDatang}</td>
+            <td class="col-center" style="font-family:monospace; font-weight:bold;">${jamPulang}</td>
+            <td>${r.keterangan || '-'}</td>
+          </tr>`;
+        }).join('');
+      } else {
+        // Reset Nilai jika data kosong
+        document.getElementById('valHadirRiwayat').innerText = "0";
+        document.getElementById('valLateRiwayat').innerText = "0";
+        document.getElementById('valEarlyRiwayat').innerText = "0";
+        document.getElementById('valAbsenRiwayat').innerText = "0";
+
+        document.getElementById('printHadir').innerText = "0";
+        document.getElementById('printTerlambat').innerText = "0";
+        document.getElementById('printTidakHadir').innerText = "0";
+
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">📭 Tidak ada riwayat ditemukan.</td></tr>';
+      }
+    })
+    .catch(err => {
+      tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:red;">❌ Gagal memuat data riwayat dari server.</td></tr>';
+    });
+}
 
     function loadDashboard() {
       fetch(`${SCRIPT_URL}?action=getDashboardData`)
