@@ -30,7 +30,7 @@
     .tab-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.3s; background: none; color: #64748b; font-size: 0.85rem; }
     .tab-btn.active { background: white; color: var(--accent); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 
-    .stats-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 25px; }
+    .stats-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 25px; }
     .stat-card { background: white; padding: 15px; border-radius: 12px; text-align: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-bottom: 4px solid var(--accent); }
     .stat-card h4 { font-size: 0.75rem; color: #64748b; margin-bottom: 5px; text-transform: uppercase; }
     .stat-card div { font-size: 1.8rem; font-weight: 700; color: #1e293b; }
@@ -83,6 +83,31 @@
       <button id="btnTabMonitoring" class="tab-btn" onclick="switchTab('monitoring')">Monitoring Hari Ini</button>
     </div>
 
+    <!-- KARTU STATISTIK RIWAYAT SAYA -->
+    <div class="stats-container">
+      <div class="stat-card" style="border-color:var(--success)">
+        <h4>Hadir</h4>
+        <div id="valHadirRiwayat">0</div>
+      </div>
+      <div class="stat-card" style="border-color:var(--warning)">
+        <h4>Terlambat</h4>
+        <div id="valLateRiwayat">0</div>
+      </div>
+      <div class="stat-card" style="border-color:#f97316">
+        <h4>Pulang Awal</h4>
+        <div id="valEarlyRiwayat">0</div>
+      </div>
+      <div class="stat-card" style="border-color:var(--danger)">
+        <h4>Tidak Hadir</h4>
+        <div id="valAbsenRiwayat">0</div>
+      </div>
+      <div class="stat-card" style="border-color:#94a3b8">
+        <h4>Waktu</h4>
+        <div id="clock">00:00</div>
+      </div>
+    </div>
+
+    <!-- TAB 1: RIWAYAT SAYA -->
     <div id="section-riwayat">
       <div class="card-box">
         <div class="card-header">
@@ -114,24 +139,18 @@
               </tr>
             </thead>
             <tbody id="rekapTableBody">
-              <tr><td colspan="6" style="text-align:center; padding:30px;">Klik tombol cari untuk memuat data.</td></tr>
+              <tr><td colspan="6" style="text-align:center; padding:30px;">Memuat data riwayat...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
     </div>
 
+    <!-- TAB 2: MONITORING HARI INI -->
     <div id="section-monitoring" class="hidden">
-      <div class="stats-container">
-        <div class="stat-card"><h4>Hadir</h4><div id="valHadirCount">0</div></div>
-        <div class="stat-card" style="border-color:var(--danger)"><h4>Terlambat</h4><div id="valLate">0</div></div>
-        <div class="stat-card" style="border-color:var(--warning)"><h4>Pulang Awal</h4><div id="valEarly">0</div></div>
-        <div class="stat-card" style="border-color:#94a3b8"><h4>Waktu</h4><div id="clock">00:00</div></div>
-      </div>
-
       <div class="card-box">
         <div class="card-header">
-          <h3>Daftar Kehadiran Pegawai</h3>
+          <h3>Daftar Kehadiran Pegawai Hari Ini</h3>
           <small id="lastUpdate" style="color:#94a3b8">Update otomatis...</small>
         </div>
         <div style="overflow-x: auto;">
@@ -139,10 +158,10 @@
             <thead>
               <tr>
                 <th>Nama Pegawai</th>
-                <th>Jabatan</th>
                 <th>Status</th>
                 <th>Jam Datang</th>
                 <th>Jam Pulang</th>
+                <th>Keterangan</th>
               </tr>
             </thead>
             <tbody id="dashTableBody">
@@ -155,7 +174,6 @@
   </div>
 
   <script>
-    // URL Web App Google Apps Script milik Anda
     const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx2Tcs8Z3MDqhHSDx6_Y2YIStdqN8WiWnq21mS0odlkZhJ4P_YRNPSziRo9iXkC20Z3/exec"; 
     const URL_GITHUB_HOME = "https://sukardilahma-cloud.github.io/Absesi-Digital-SMKN-1-KTG/";
 
@@ -168,10 +186,8 @@
         updateClock();
         loadRekap('bulan'); 
         setInterval(updateClock, 1000);
-        loadDashboard(); 
-        setInterval(loadDashboard, 30000); 
       } else {
-        const msg = '<tr><td colspan="6" style="text-align:center; color:red; padding:20px;">⚠️ ID Sesi Tidak Terdeteksi. Silakan Login Kembali dari Form Utama.</td></tr>';
+        const msg = '<tr><td colspan="6" style="text-align:center; color:red; padding:20px;">⚠️ ID Sesi Tidak Terdeteksi. Silakan Login Kembali.</td></tr>';
         document.getElementById('dashTableBody').innerHTML = msg;
         document.getElementById('rekapTableBody').innerHTML = msg;
         alert("Sesi login berakhir atau ID tidak ditemukan.");
@@ -204,68 +220,7 @@
       document.getElementById('clock').innerText = now.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
     }
 
-    // Menggunakan Fetch API untuk mengambil data monitoring dari GAS
-    function loadDashboard() {
-      fetch(`${SCRIPT_URL}?action=getDashboardData`)
-        .then(res => res.json())
-        .then(res => {
-          if (!res) return;
-
-          document.getElementById('valHadirCount').innerText = res.stats.hadir || 0;
-          document.getElementById('valLate').innerText = res.stats.terlambat || 0;
-          document.getElementById('valEarly').innerText = res.stats.pulangAwal || 0;
-          
-          if (document.getElementById('valAbsen')) {
-            document.getElementById('valAbsen').innerText = res.stats.tidakHadir || 0;
-          }
-
-          const tbody = document.getElementById('dashTableBody');
-          if (res.table && res.table.length > 0) {
-            tbody.innerHTML = res.table.map(r => {
-              let badgeStyle = "background:#dcfce7; color:#166534;"; 
-              let statusTeks = r.kehadiran;
-
-              if (r.jam_datang !== "-" && (r.jam_pulang === "-" || !r.jam_pulang)) {
-                badgeStyle = "background:#fef3c7; color:#92400e;"; 
-                statusTeks = "Belum Pulang";
-              } 
-              else if (r.kehadiran === "Terlambat") {
-                badgeStyle = "background:#fef3c7; color:#92400e;";
-              }
-              else if (r.kehadiran === "Tidak Hadir" || r.jam_datang === "-") {
-                badgeStyle = "background:#fee2e2; color:#b91c1c;";
-                statusTeks = "Tidak Hadir";
-              }
-
-              return `<tr>
-                <td>
-                  <div style="font-weight:bold;">${r.nama}</div>
-                  <div style="font-size:0.75rem; color:#64748b;">${r.jabatan}</div>
-                </td>
-                <td style="text-align:center">
-                  <span class="badge" style="${badgeStyle}">
-                    ${statusTeks}
-                  </span>
-                </td>
-                <td style="text-align:center; font-family:monospace; font-weight:bold;">${r.jam_datang || '-'}</td>
-                <td style="text-align:center; font-family:monospace; font-weight:bold;">${r.jam_pulang || '-'}</td>
-                <td style="font-size:0.75rem; color:#64748b;">${r.keterangan || '-'}</td>
-              </tr>`;
-            }).join('');
-          } else {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:30px; color:#94a3b8;">😴 Belum ada aktivitas hari ini.</td></tr>';
-          }
-
-          if (document.getElementById('lastUpdate')) {
-            document.getElementById('lastUpdate').innerText = "Update: " + new Date().toLocaleTimeString('id-ID');
-          }
-        })
-        .catch(err => {
-          console.error("Gagal mengambil data dashboard:", err);
-        });
-    }
-
-    // Menggunakan Fetch API untuk mengambil data rekap personal
+    // MEMUAT DAN MENGHITUNG STATISTIK RIWAYAT SAYA
     function loadRekap(f) {
       const filterType = f || 'bulan'; 
       const activeId = userId || document.getElementById('user_id_hidden').value;
@@ -280,7 +235,37 @@
       fetch(`${SCRIPT_URL}?action=getRekapDataPersonal&filterType=${filterType}&tglMulai=${tglMulai}&tglSelesai=${tglSelesai}&id=${activeId}`)
         .then(res => res.json())
         .then(res => {
+          let countHadir = 0;
+          let countTerlambat = 0;
+          let countPulangAwal = 0;
+          let countTidakHadir = 0;
+
           if (res && res.length > 0) {
+            // Kalkulasi Kehadiran dari Data Riwayat
+            res.forEach(r => {
+              const status = (r.kehadiran || "").toLowerCase();
+              const ket = (r.keterangan || "").toLowerCase();
+
+              if (status.includes("terlambat") || ket.includes("terlambat")) {
+                countTerlambat++;
+              } else if (status.includes("hadir") || status.includes("tepat waktu")) {
+                countHadir++;
+              } else if (status.includes("tidak") || status.includes("alpa") || status.includes("izin") || status.includes("sakit")) {
+                countTidakHadir++;
+              }
+
+              if (ket.includes("pulang awal") || ket.includes("cepat pulang")) {
+                countPulangAwal++;
+              }
+            });
+
+            // Update Tampilan Kartu Statistik
+            document.getElementById('valHadirRiwayat').innerText = countHadir;
+            document.getElementById('valLateRiwayat').innerText = countTerlambat;
+            document.getElementById('valEarlyRiwayat').innerText = countPulangAwal;
+            document.getElementById('valAbsenRiwayat').innerText = countTidakHadir;
+
+            // Render Baris Tabel Riwayat
             tbody.innerHTML = res.map(r => {
               let badgeStyle = r.kehadiran === "Terlambat" 
                 ? "background:#fef3c7; color:#92400e;" 
@@ -302,11 +287,52 @@
               </tr>`;
             }).join('');
           } else {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">📭 Tidak ada aktivitas ditemukan.</td></tr>';
+            // Reset ke 0 jika tidak ada data
+            document.getElementById('valHadirRiwayat').innerText = "0";
+            document.getElementById('valLateRiwayat').innerText = "0";
+            document.getElementById('valEarlyRiwayat').innerText = "0";
+            document.getElementById('valAbsenRiwayat').innerText = "0";
+
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:#94a3b8;">📭 Tidak ada riwayat ditemukan.</td></tr>';
           }
         })
         .catch(err => {
-          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:red;">❌ Gagal memuat data dari server.</td></tr>';
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:30px; color:red;">❌ Gagal memuat data riwayat dari server.</td></tr>';
+        });
+    }
+
+    function loadDashboard() {
+      fetch(`${SCRIPT_URL}?action=getDashboardData`)
+        .then(res => res.json())
+        .then(res => {
+          if (!res) return;
+          const tbody = document.getElementById('dashTableBody');
+          if (res.table && res.table.length > 0) {
+            tbody.innerHTML = res.table.map(r => {
+              let badgeStyle = "background:#dcfce7; color:#166534;";
+              let statusTeks = r.kehadiran;
+
+              if (r.jam_datang !== "-" && (r.jam_pulang === "-" || !r.jam_pulang)) {
+                badgeStyle = "background:#fef3c7; color:#92400e;";
+                statusTeks = "Belum Pulang";
+              } else if (r.kehadiran === "Terlambat") {
+                badgeStyle = "background:#fef3c7; color:#92400e;";
+              } else if (r.kehadiran === "Tidak Hadir" || r.jam_datang === "-") {
+                badgeStyle = "background:#fee2e2; color:#b91c1c;";
+              }
+
+              return `<tr>
+                <td>
+                  <div style="font-weight:bold;">${r.nama}</div>
+                  <div style="font-size:0.75rem; color:#64748b;">${r.jabatan}</div>
+                </td>
+                <td style="text-align:center"><span class="badge" style="${badgeStyle}">${statusTeks}</span></td>
+                <td style="text-align:center; font-family:monospace; font-weight:bold;">${r.jam_datang || '-'}</td>
+                <td style="text-align:center; font-family:monospace; font-weight:bold;">${r.jam_pulang || '-'}</td>
+                <td style="font-size:0.75rem; color:#64748b;">${r.keterangan || '-'}</td>
+              </tr>`;
+            }).join('');
+          }
         });
     }
 
