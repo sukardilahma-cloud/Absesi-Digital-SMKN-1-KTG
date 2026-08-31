@@ -284,6 +284,20 @@
         if (video.srcObject) video.srcObject.getTracks().forEach(track => track.stop());
         location.reload();
     }
+
+    let globalDaftarLibur = [];
+
+// Fungsi saat memuat data rekap
+function loadDataRekap() {
+  google.script.run.withSuccessHandler(function(response) {
+    // response berisi { rekap: [...], libur: [...] }
+    globalDaftarLibur = response.libur || [];
+    
+    // Simpan data rekap dan render tabel
+    window.rawRekapData = response.rekap;
+    renderTabelRekap(response.rekap);
+  }).getRekapDataCombined();
+}
 </script>
 </body>
 </html>
