@@ -973,37 +973,51 @@
     return alert("Data belum dimuat! Silakan klik tombol '🔍 Tampilkan Data' terlebih dahulu.");
   }
 
-  // 1. Hitung akumulasi Hadir & Tidak Hadir per GTK
-  const rekapHarian = {};
+  // Pengelompokan unik GTK menggunakan Map
+  const rekapHarian = new Map();
 
   data.forEach(r => {
-    const nama = r.nama || 'Tanpa Nama';
-    const jabatan = r.jabatan || '-';
+    const nama = (r.nama || 'Tanpa Nama').trim();
+    const jabatan = (r.jabatan || '-').trim();
+    const key = `${nama.toLowerCase()}_${jabatan.toLowerCase()}`;
 
-    if (!rekapHarian[nama]) {
-      rekapHarian[nama] = {
+    if (!rekapHarian.has(key)) {
+      rekapHarian.set(key, {
         nama: nama,
         jabatan: jabatan,
-        hadir: 0,
+        hadirTepat: 0,
+        terlambat: 0,
         tidakHadir: 0,
-        total: 0
-      };
+        totalHari: 0
+      });
     }
 
-    // Penentuan status kehadiran
-    const isTidakHadir = !r.jam_datang || r.jam_datang === '-' || (r.kehadiran && r.kehadiran.toLowerCase().includes('tidak hadir'));
+    const item = rekapHarian.get(key);
+    const jamDatang = (r.jam_datang || '').trim();
+    const statusKehadiran = (r.kehadiran || '').toLowerCase().trim();
+    const ket = (r.keterangan || '').toLowerCase().trim();
 
-    if (isTidakHadir) {
-      rekapHarian[nama].tidakHadir += 1;
-    } else {
-      rekapHarian[nama].hadir += 1;
+    // 1. Pengecekan TIDAK HADIR (Jam kosong / status Tidak Hadir / Keterangan Izin/Sakit/Alpa)
+    const isAbsenKosong = !jamDatang || jamDatang === '-';
+    const isStatusTidakHadir = statusKehadiran.includes('tidak hadir') || statusKehadiran.includes('alpa') || statusKehadiran.includes('izin') || statusKehadiran.includes('sakit');
+    const isKetTidakHadir = ket.includes('tidak absen') || ket.includes('tanpa keterangan');
+
+    if (isAbsenKosong || isStatusTidakHadir || isKetTidakHadir) {
+      item.tidakHadir += 1;
+    } 
+    // 2. Pengecekan TERLAMBAT
+    else if (statusKehadiran.includes('terlambat') || ket.includes('terlambat')) {
+      item.terlambat += 1;
+    } 
+    // 3. HADIR TEPAT WAKTU
+    else {
+      item.hadirTepat += 1;
     }
-    rekapHarian[nama].total += 1;
+
+    item.totalHari += 1;
   });
 
-  const daftarGtk = Object.values(rekapHarian);
-
-  // 2. Buat Tampilan Cetak (Printable Window)
+  const daftarGtk = Array.from(rekapHarian.values());
   const printWindow = window.open('', '_blank');
   
   let html = `
@@ -1014,15 +1028,15 @@
       <style>
         body { font-family: Arial, sans-serif; padding: 20px; color: #333; }
         .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
-        .header h2 { margin: 0; font-size: 18pt; text-transform: uppercase; }
-        .header p { margin: 5px 0 0 0; font-size: 11pt; }
+        .header h2 { margin: 0; font-size: 16pt; text-transform: uppercase; }
+        .header p { margin: 5px 0 0 0; font-size: 10pt; }
         table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #444; padding: 8px 10px; font-size: 10pt; }
+        th, td { border: 1px solid #444; padding: 7px 9px; font-size: 9pt; }
         th { background-color: #f2f2f2; text-align: center; font-weight: bold; }
         td.center { text-align: center; }
         .footer { margin-top: 30px; float: right; text-align: center; width: 200px; font-size: 10pt; }
         @media print {
-          @page { size: A4 portrait; margin: 15mm; }
+          @page { size: A4 portrait; margin: 12mm; }
         }
       </style>
     </head>
@@ -1035,26 +1049,29 @@
       <table>
         <thead>
           <tr>
-            <th width="5%">No</th>
+            <th width="4%">No</th>
             <th>Nama GTK</th>
             <th>Jabatan</th>
-            <th width="15%">Jumlah Hadir</th>
-            <th width="15%">Tidak Hadir</th>
-            <th width="15%">Total Hari</th>
+            <th width="12%">Hadir (Tepat)</th>
+            <th width="12%">Terlambat</th>
+            <th width="12%">Tidak Hadir</th>
+            <th width="12%">Total Hari</th>
           </tr>
         </thead>
         <tbody>
   `;
 
   daftarGtk.forEach((item, index) => {
+    const totalHadirKeseluruhan = item.hadirTepat + item.terlambat;
     html += `
       <tr>
         <td class="center">${index + 1}</td>
-        <td>${item.nama}</td>
+        <td><b>${item.nama}</b></td>
         <td>${item.jabatan}</td>
-        <td class="center" style="color: green; font-weight: bold;">${item.hadir}</td>
+        <td class="center" style="color: green;">${item.hadirTepat}</td>
+        <td class="center" style="color: #d97706;">${item.terlambat}</td>
         <td class="center" style="color: red; font-weight: bold;">${item.tidakHadir}</td>
-        <td class="center">${item.total}</td>
+        <td class="center"><b>${item.totalHari}</b></td>
       </tr>
     `;
   });
