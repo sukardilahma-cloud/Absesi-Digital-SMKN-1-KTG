@@ -56,16 +56,14 @@
         </div>
 
         <div class="camera-box">
-            <!-- Kamera Live -->
             <video id="webcam" autoplay playsinline></video>
-            <!-- Preview hasil tangkapan foto -->
             <img id="photoPreview" style="display: none;" alt="Preview Foto">
             <canvas id="canvas" style="display:none;"></canvas>
         </div>
 
         <div class="coords-container">
-            <div class="coord-box"><span class="coord-label">LATITUDE</span><span id="lat-val">0.0</span></div>
-            <div class="coord-box"><span class="coord-label">LONGITUDE</span><span id="lon-val">0.0</span></div>
+            <div class="coord-box"><span class="coord-label">LATITUDE</span><span id="lat-val">Mencari...</span></div>
+            <div class="coord-box"><span class="coord-label">LONGITUDE</span><span id="lon-val">Mencari...</span></div>
         </div>
         
         <div class="button-group">
@@ -73,10 +71,8 @@
             <button id="btnPulang" class="btn btn-pulang" onclick="selectType('Pulang')">PULANG</button>
         </div>
 
-        <!-- Tombol Ambil Absen -->
         <button onclick="prosesAmbilAbsen()" id="btnAmbil" class="btn btn-ambil" disabled>📸 AMBIL ABSEN</button>
         
-        <!-- Action Group Pasca Ambil Foto (Hidden Default) -->
         <div id="postCaptureGroup" style="display: none;">
             <button onclick="kirimAbsen()" id="btnKirim" class="btn btn-kirim">🚀 KIRIM ABSEN</button>
             <button onclick="ulangFoto()" id="btnUlang" class="btn-ulang">🔄 Ulang Foto</button>
@@ -106,8 +102,7 @@
 
     setInterval(() => { 
         document.getElementById('clock').innerText = new Date().toLocaleTimeString('id-ID'); 
-        // Hanya deteksi jika kamera sedang aktif (bukan preview foto)
-        if(modelsLoaded && video.srcObject && video.style.display !== 'none') {
+        if(modelsLoaded && video.srcObject && video.style.display !== 'none' && !video.paused) {
             detectFace();
         }
     }, 1000);
@@ -190,9 +185,8 @@
         }
     }
 
-    // 1. Fungsi Ambil Foto & Tampilkan Preview
     async function prosesAmbilAbsen() {
-        if(!userData || !statusAbsen || currentLat === 0) return alert("Tunggu GPS!");
+        if(!userData || !statusAbsen || currentLat === 0) return alert("Pilih status DATANG/PULANG dan pastikan lokasi GPS terdeteksi!");
         
         const btn = document.getElementById('btnAmbil');
         const msg = document.getElementById('pesan');
@@ -206,7 +200,6 @@
             return;
         }
 
-        // Tangkap gambar dari video ke canvas
         canvas.width = video.videoWidth; 
         canvas.height = video.videoHeight;
         const ctx = canvas.getContext('2d');
@@ -217,7 +210,6 @@
         
         const imageData = canvas.toDataURL('image/jpeg', 0.6);
 
-        // Siapkan Payload data untuk dikirim nanti
         preparedPayload = { 
             id: userData.id, 
             nama: userData.nama, 
@@ -229,21 +221,20 @@
             faceMatch: (detection.score * 100).toFixed(0)
         };
 
-        // Tampilkan Hasil foto pada image preview dan sembunyikan live video
         photoPreview.src = imageData;
         photoPreview.style.display = 'block';
         video.style.display = 'none';
+        if (video.srcObject) video.pause(); // Jeda kamera untuk menghemat resource
 
-        // Tampilkan tombol Kirim & Ulang, sembunyikan tombol Ambil Foto
         btn.style.display = 'none';
         document.getElementById('postCaptureGroup').style.display = 'block';
         msg.innerHTML = `<div style="color:#00ff88;">✅ Foto berhasil diambil. Klik "KIRIM ABSEN" untuk menyimpan.</div>`;
     }
 
-    // 2. Fungsi Ulang Foto (Reset ke mode Kamera)
     function ulangFoto() {
         photoPreview.style.display = 'none';
         video.style.display = 'block';
+        if (video.srcObject) video.play(); // Play kembali kamera
         document.getElementById('btnAmbil').style.display = 'block';
         document.getElementById('btnAmbil').disabled = false;
         document.getElementById('postCaptureGroup').style.display = 'none';
@@ -251,7 +242,6 @@
         preparedPayload = null;
     }
 
-    // 3. Fungsi Kirim Absen ke Server
     function kirimAbsen() {
         if (!preparedPayload) return alert("Belum ada foto yang siap dikirim!");
 
