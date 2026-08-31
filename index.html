@@ -277,7 +277,7 @@
 
     function bukaDashboard() {
         let idUser = (userData && userData.id) ? userData.id : document.getElementById('nipInput').value.trim();
-        window.open(SCRIPT_URL + "?page=dashboard_gtk&id=" + idUser, "_top");
+        window.location.href = "dashboard.html?id=" + idUser;
     }
 
     function logoutKeLogin() {
