@@ -533,7 +533,10 @@
       }
     }
 
-    function renderTabelRekap(data) {
+    // Deklarasikan variabel global ini di luar fungsi agar siap menerima data libur dari Sheet 'Libur'
+let globalDaftarLibur = []; 
+
+function renderTabelRekap(data) {
   const container = document.getElementById('container-rekap-hasil');
   const selectedGtk = document.getElementById('filterGtkSelect') ? document.getElementById('filterGtkSelect').value : '';
 
@@ -555,28 +558,34 @@
 
   let html = '<div id="rekapPrintArea">';
 
-  // CETAK PER NAMA GTK INDIVIDU
+  // ==========================================
+  // 1. OPSI CETAK PER NAMA GTK INDIVIDU
+  // ==========================================
   if (selectedGtk) {
     const gtkInfo = filteredData[0];
     
     let totalHadir = 0;
     let totalTerlambat = 0;
     let totalTidakHadir = 0;
+    let totalLibur = 0;
 
-    // Kalkulasi presisi status & keterangan
+    // Hitung kalkulasi statistik individu
     filteredData.forEach(r => {
       const status = (r.kehadiran || "").toLowerCase().trim();
       const ket = (r.keterangan || "").toLowerCase().trim();
       const jamDatang = (r.jam_datang || "").trim();
 
-      const isTidakHadir = !jamDatang || jamDatang === '-' || status.includes('tidak hadir') || status.includes('alpa') || status.includes('izin') || status.includes('sakit') || ket.includes('tanpa keterangan');
-      const isTerlambat = status.includes('terlambat') || ket.includes('terlambat');
+      const isLibur = globalDaftarLibur.includes(r.tanggal) || status.includes('libur') || ket.includes('libur');
+      const isTidakHadir = !isLibur && (!jamDatang || jamDatang === '-' || status.includes('tidak hadir') || status.includes('alpa') || status.includes('izin') || status.includes('sakit') || ket.includes('tanpa keterangan'));
+      const isTerlambat = !isLibur && (status.includes('terlambat') || ket.includes('terlambat'));
 
-      if (isTidakHadir) {
+      if (isLibur) {
+        totalLibur++;
+      } else if (isTidakHadir) {
         totalTidakHadir++;
       } else if (isTerlambat) {
         totalTerlambat++;
-        totalHadir++; // Terlambat tetap dihitung masuk/hadir secara fisik
+        totalHadir++; // Terlambat tetap dihitung masuk/hadir fisik
       } else {
         totalHadir++;
       }
@@ -590,15 +599,16 @@
           <div style="font-size: 12pt; font-weight: bold; text-transform: uppercase;">SMK Negeri 1 Kotamobagu</div>
         </div>
 
-       <table style="width:100%; margin-bottom:15px; font-size:10pt; border:none;">
-         <tr><td width="120"><b>Nama GTK</b></td><td width="10">:</td><td>${gtkInfo.nama}</td></tr>
-         <tr><td><b>Jabatan</b></td><td>:</td><td>${gtkInfo.jabatan}</td></tr>
+        <table style="width:100%; margin-bottom:15px; font-size:10pt; border:none;">
+          <tr><td width="120"><b>Nama GTK</b></td><td width="10">:</td><td>${gtkInfo.nama}</td></tr>
+          <tr><td><b>Jabatan</b></td><td>:</td><td>${gtkInfo.jabatan}</td></tr>
         </table>
 
-        <div style="display:flex; gap:10px; margin-bottom:15px; font-size:9pt;">
+        <div style="display:flex; gap:10px; margin-bottom:15px; font-size:9pt; flex-wrap:wrap;">
           <div style="padding:6px 12px; background:#dcfce7; border:1px solid #16a34a; border-radius:4px;">Total Hadir: <b>${totalHadir}</b></div>
           <div style="padding:6px 12px; background:#fef3c7; border:1px solid #d97706; border-radius:4px;">Terlambat: <b>${totalTerlambat}</b></div>
           <div style="padding:6px 12px; background:#fee2e2; border:1px solid #dc2626; border-radius:4px;">Tidak Hadir: <b>${totalTidakHadir}</b></div>
+          <div style="padding:6px 12px; background:#eff6ff; border:1px solid #2563eb; border-radius:4px;">Libur: <b>${totalLibur}</b></div>
         </div>
 
         <table border="1" style="width:100%; border-collapse:collapse; font-size: 10pt;">
@@ -614,42 +624,53 @@
           </thead>
           <tbody>`;
 
+    // Render baris tabel per individu
     filteredData.forEach((r, i) => {
       const status = (r.kehadiran || "").toLowerCase().trim();
       const ket = (r.keterangan || "").toLowerCase().trim();
       const jamDatang = (r.jam_datang || "").trim();
 
-      const isTidakHadir = !jamDatang || jamDatang === '-' || status.includes('tidak hadir') || status.includes('alpa') || status.includes('izin') || status.includes('sakit') || ket.includes('tanpa keterangan');
-      const isTerlambat = status.includes('terlambat') || ket.includes('terlambat');
+      const isLibur = globalDaftarLibur.includes(r.tanggal) || status.includes('libur') || ket.includes('libur');
+      const isTidakHadir = !isLibur && (!jamDatang || jamDatang === '-' || status.includes('tidak hadir') || status.includes('alpa') || status.includes('izin') || status.includes('sakit') || ket.includes('tanpa keterangan'));
+      const isTerlambat = !isLibur && (status.includes('terlambat') || ket.includes('terlambat'));
 
       let badgeClass = 'bg-green';
       let statusText = r.kehadiran || 'Hadir';
+      let rowStyle = '';
 
-      if (isTidakHadir) {
+      if (isLibur) {
+        badgeClass = 'bg-blue'; // Badge warna biru untuk Libur
+        statusText = 'Libur';
+        rowStyle = 'background-color: #eff6ff;';
+      } else if (isTidakHadir) {
         badgeClass = 'bg-red';
         statusText = 'Tidak Hadir';
+        rowStyle = 'background-color: #fff1f2;';
       } else if (isTerlambat) {
-        badgeClass = 'bg-red'; // Menggunakan warna peringatan merah/kuning untuk terlambat
+        badgeClass = 'bg-yellow'; // Badge warna kuning untuk Terlambat
         statusText = 'Terlambat';
+        rowStyle = 'background-color: #fffbeb;';
       }
 
       html += `
-        <tr style="${isTidakHadir ? 'background-color: #fff1f2;' : (isTerlambat ? 'background-color: #fffbeb;' : '')}">
+        <tr style="${rowStyle}">
           <td style="text-align:center; padding:5px;">${i + 1}</td>
           <td style="text-align:center; padding:5px;">${r.tanggal}</td>
           <td style="text-align:center; padding:5px;"><span class="badge ${badgeClass}">${statusText}</span></td>
           <td style="text-align:center; padding:5px;">${r.jam_datang || '-'}</td>
           <td style="text-align:center; padding:5px;">${r.jam_pulang || '-'}</td>
           <td style="font-size:8pt; padding:5px; ${isTidakHadir || isTerlambat ? 'color:#b91c1c; font-weight:bold;' : ''}">
-            ${r.keterangan || (isTidakHadir ? 'Tidak melakukan absensi' : '-')}
+            ${r.keterangan || (isLibur ? 'Hari Libur Resmi' : (isTidakHadir ? 'Tidak melakukan absensi' : '-'))}
           </td>
         </tr>`;
     });
 
     html += `</tbody></table></div>`;
 
+  // ==========================================
+  // 2. OPSI REKAP KOLEKTIF SEMUA GTK PER TANGGAL
+  // ==========================================
   } else {
-    // REKAP KOLEKTIF SEMUA GTK PER TANGGAL
     const grouped = filteredData.reduce((acc, curr) => {
       if (!acc[curr.tanggal]) acc[curr.tanggal] = [];
       acc[curr.tanggal].push(curr);
@@ -691,22 +712,30 @@
         const ket = (r.keterangan || "").toLowerCase().trim();
         const jamDatang = (r.jam_datang || "").trim();
 
-        const isTidakHadir = !jamDatang || jamDatang === '-' || status.includes('tidak hadir') || status.includes('alpa') || status.includes('izin') || status.includes('sakit') || ket.includes('tanpa keterangan');
-        const isTerlambat = status.includes('terlambat') || ket.includes('terlambat');
+        const isLibur = globalDaftarLibur.includes(r.tanggal) || status.includes('libur') || ket.includes('libur');
+        const isTidakHadir = !isLibur && (!jamDatang || jamDatang === '-' || status.includes('tidak hadir') || status.includes('alpa') || status.includes('izin') || status.includes('sakit') || ket.includes('tanpa keterangan'));
+        const isTerlambat = !isLibur && (status.includes('terlambat') || ket.includes('terlambat'));
 
         let badgeClass = 'bg-green';
         let statusText = r.kehadiran || 'Hadir';
+        let rowStyle = '';
 
-        if (isTidakHadir) {
+        if (isLibur) {
+          badgeClass = 'bg-blue';
+          statusText = 'Libur';
+          rowStyle = 'background-color: #eff6ff;';
+        } else if (isTidakHadir) {
           badgeClass = 'bg-red';
           statusText = 'Tidak Hadir';
+          rowStyle = 'background-color: #fff1f2;';
         } else if (isTerlambat) {
-          badgeClass = 'bg-red';
+          badgeClass = 'bg-yellow';
           statusText = 'Terlambat';
+          rowStyle = 'background-color: #fffbeb;';
         }
 
         html += `
-          <tr style="${isTidakHadir ? 'background-color: #fff1f2;' : (isTerlambat ? 'background-color: #fffbeb;' : '')}">
+          <tr style="${rowStyle}">
             <td style="text-align:center; padding:5px;">${i + 1}</td>
             <td style="font-weight:600; padding:5px;">${r.nama}</td>
             <td style="text-align:center; padding:5px;">${r.jabatan}</td>
@@ -714,12 +743,12 @@
             <td style="text-align:center; padding:5px;">${r.jam_datang || '-'}</td>
             <td style="text-align:center; padding:5px;">${r.jam_pulang || '-'}</td>
             <td style="font-size:8pt; padding:5px; ${isTidakHadir || isTerlambat ? 'color:#b91c1c; font-weight:bold;' : ''}">
-              ${r.keterangan || (isTidakHadir ? 'Tidak melakukan absensi' : '-')}
+              ${r.keterangan || (isLibur ? 'Hari Libur Resmi' : (isTidakHadir ? 'Tidak melakukan absensi' : '-'))}
             </td>
           </tr>`;
       });
 
-      html += `</tbody></table></div>`;
+      html += `</tbody>mtable></div>`;
     });
   }
 
